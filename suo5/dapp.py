@@ -2,7 +2,6 @@
 
 import logging
 logger = logging.getLogger(__name__)
-print('here',logger.level)
 
 import os, time, struct, base64, json, traceback
 from threading import Thread, Timer
