@@ -66,6 +66,7 @@ def init_suo5():
   uname = os.popen('uname -sm').read()  # 'Darwin x86_64' 'Linux aarch64' 'Linux x86_64'
   uname = tuple(uname.lower().split())
   suo5_bin = _suo5_bin_list.get(uname,None)
+  print('here2',suo5_bin,uname)
   if suo5_bin is None:
     logger.error('suo5 client not support platform: %s',uname)
     return False
@@ -77,6 +78,7 @@ def init_suo5():
   client_user_psw = cfg.get('client_user_psw','')
   ex_opt = cfg.get('ex_opt',{})
   
+  print('here3',suo5_local_host,find_client_pid,ex_opt)
   if not suo5_local_host or len(suo5_local_host.split(':')) != 2:
     logger.error('invalid "suo5_local_host" in config.json')
     auto_start_suo5 = False  # meet error, avoid auto start
@@ -94,6 +96,7 @@ def init_suo5():
   check_alive.start()
   atexit.register(lambda: check_alive.exit())
   
+  print('here4')
   return True
 
 def find_suo5_PID():
