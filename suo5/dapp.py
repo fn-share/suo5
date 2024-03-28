@@ -203,7 +203,7 @@ class CheckAlive(Thread):
               tr_login_time = modi_tm
               b = open(tr_login_file,'rt').read().split(',')
               if len(b) == 4:
-                when_cred_updated(int(b[0],b[1],(b[2],int(b[3])))
+                when_cred_updated(int(b[0]),b[1],(b[2],int(b[3])))
         except:
           logger.warning(traceback.format_exc())
       
