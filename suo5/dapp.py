@@ -94,6 +94,7 @@ def init_suo5():
   check_alive.start()
   atexit.register(lambda: check_alive.exit())
   
+  logger.info('load config successful: suo5=%s, auto=%s, check_alive=%s',suo5_bin,auto_start_suo5,ex_opt.get('disable_check',False))
   return True
 
 def find_suo5_PID():
