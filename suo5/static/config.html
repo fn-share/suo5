@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="//www.nb-chain.cn/www/common/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+<style>
+#abstract-state img {
+  width: 102px;
+  height: 102px;
+}
+#abstract-state img:hover {
+  transform: scale(1.01,1.01);
+  opacity: 0.8;
+}
+</style>
+
+<div class="container-fluid p-3"><div class="row">
+  <div class="col-sm-4 col-md-3 col-lg-2 pb-4">
+    <div class="list-group text-center" id="list-tab" role="tablist">
+      <a class="list-group-item list-group-item-action active" id="list-abstract-list" data-bs-toggle="list" href="#list-abstract" role="tab">概览</a>
+      <a class="list-group-item list-group-item-action" id="list-config-list" data-bs-toggle="list" href="#list-config" role="tab">设置</a>
+      <a class="list-group-item list-group-item-action" id="list-exopt-list" data-bs-toggle="list" href="#list-exopt" role="tab">高级选项</a>
+      <div class="list-group-item pt-0 pb-0" style="height:4px; background-color: #fafafa;"></div>
+      <a class="list-group-item list-group-item-action" id="list-logout-list" data-bs-toggle="list" href="#list-logout" role="tab">退出登录</a>
+    </div>
+  </div>
+  <div class="col-sm-8 col-md-9 col-lg-10 pe-3"><div class="tab-content" id="nav-tabContent">
+
+<div class="tab-pane fade show active" id="list-abstract" role="tabpanel">
+<div class="mt-4 ms-3" id="abstract-state">
+  <img name="gray" src="common/img/btn_gray.jpg"><img name="yellow" class="d-none" src="common/img/btn_yellow.jpg"><img name="green" class="d-none" src="common/img/btn_green.jpg">
+</div>
+<div class="text-center mt-3" style="width:130px">
+  <p id="abstract-state-desc">服务状态未知</p>
+</div>
+</div>
+
+<div class="tab-pane fade" id="list-config" role="tabpanel">
+<h3 class="mb-4">suo5 服务侧配置</h3>
+<p class="mb-4">服务侧配置信息需由 suo5 服务商提供。</p>
+<form onsubmit="return false">
+<div class="input-group mb-3" style="width:300px">
+  <span class="input-group-text">连接地址</span>
+  <input type="text" class="form-control shadow-none" placeholder="http 或 https 网址" id="suo5-server-url">
+</div>
+</form>
+<h3 class="mb-4 mt-5">suo5 客户侧配置</h3>
+<p class="mb-4">suo5 客户端在本设备运行，一般情况下它与终端用户同处一个局域网内。如果想阻止局域网内其它用户接入，不妨指定 <code>user:password</code>，否则，为了简单起见，用户密码一栏不要填写（表示无密码接入）。</p>
+<form onsubmit="return false">
+<div class="input-group mb-3" style="width:300px">
+  <span class="input-group-text">接入位置</span>
+  <input type="text" class="form-control shadow-none" id="suo5-local-pos" readonly>
+</div>
+<div class="input-group mb-3" style="width:300px">
+  <span class="input-group-text">用户密码</span>
+  <input type="text" class="form-control shadow-none" placeholder="user:password 或不填" id="suo5-user-psw">
+</div>
+<div class="input-group mb-3" style="width:300px">
+  <input class="form-check-input shadow-none" type="checkbox" id="auto-start" checked>
+  <label class="form-check-label ms-2" for="auto-start">自动启动</label>
+</div>
+</form>
+<div class="mt-5 mb-4">
+  <button type="button" class="btn btn-primary shadow-none" id="btn-submit-save" disabled>提交更改</button>
+</div>
+</div>
+
+<div class="tab-pane fade" id="list-exopt" role="tabpanel">
+<h2 class="mb-5">高级选项</h2>
+<p class="mb-4">如下选项中，“禁止存活检查” 用于停止周期性检测云端 suo5 服务是否可达，其它 3 个选项均为 suo5 客户端程序的启动参数。</p>
+<form onsubmit="return false">
+<div class="input-group mb-3" style="width:300px">
+  <input class="form-check-input shadow-none" type="checkbox" id="disable-check">
+  <label class="form-check-label ms-2" for="disable-check">禁止存活检查</label>
+</div>
+<div class="input-group mb-3" style="width:300px">
+  <input class="form-check-input shadow-none" type="checkbox" id="with-get-method">
+  <label class="form-check-label ms-2" for="with-get-method">使用参数 <code>--method GET</code></label>
+</div>
+<div class="input-group mb-3" style="width:300px">
+  <input class="form-check-input shadow-none" type="checkbox" id="with-no-gzip">
+  <label class="form-check-label ms-2" for="with-no-gzip">使用参数 <code>--no-gzip</code></label>
+</div>
+<div class="input-group mb-3" style="width:300px">
+  <input class="form-check-input shadow-none" type="checkbox" id="with-cookiejar">
+  <label class="form-check-label ms-2" for="with-cookiejar">使用参数 <code>--jar</code></label>
+</div>
+<div class="input-group mb-3" style="width:300px">
+  <span class="input-group-text">--ua</span>
+  <input type="text" class="form-control shadow-none" id="with-user-agent">
+</div>
+</form>
+<div class="mt-5 mb-4">
+  <button type="button" class="btn btn-primary shadow-none" id="btn-submit-exopt" disabled>提交更改</button>
+</div>
+</div>
+
+<div class="tab-pane fade" id="list-logout" role="tabpanel">
+<h2 class="mb-5">登录状态</h2>
+<p class="mb-4" id="login-state"></p>
+<div class="mt-4 mb-4"><button type="button" class="btn btn-primary shadow-none" id="btn-logout">退出登录</button></div>
+</div>
+
+  </div></div>
+</div></div>
+
+<script src="./common/js/jquery-3.6.0.slim.min.js"></script>
+<script src="./common/js/popper.min.js"></script>
+<script src="./common/js/bootstrap.min.js"></script>
+<script src="//www.nb-chain.cn/www/common/js/nbc_base.min.js"></script>
+
+<script>
+function getCookie__(name) {
+  if (document.cookie.length > 0) {
+    var iEnd, iStart = document.cookie.indexOf(name + '=');
+    if (iStart != -1) {
+      iStart = iStart + name.length + 1;
+      iEnd = document.cookie.indexOf(';',iStart);
+      if (iEnd == -1) iEnd = document.cookie.length;
+      return unescape(document.cookie.substring(iStart,iEnd));
+    }
+  }
+  return '';
+}
+
+function setCookie__(name,value,expireDays,path) {
+  expireDays = expireDays || 1;
+  var exDate = new Date();
+  exDate.setTime(exDate.getTime() + expireDays*86400000);  // 24*60*60*1000=86400000
+  path = path || '/';
+  document.cookie = name + '=' + escape(value) + ';expires=' + exDate.toGMTString() + ';path=' + path + ';';
+}
+
+function delCookie__(name,path) {
+  if (document.cookie.length > 0) {
+    var iStart = document.cookie.indexOf(name + '=');
+    if (iStart != -1) {
+      var exp = new Date();
+      exp.setTime(exp.getTime() - 1);
+      path = path || '/';
+      document.cookie = name + '=;expires=' + exp.toGMTString() + ';path=' + path + ';';
+    }
+  }
+}
+
+function wait__(promise_obj, wait) {
+  var abort_fn = null;
+  let abortable_promise = Promise.race([ promise_obj,
+    new Promise( function(resolve, reject) {
+      abort_fn = function() { reject(new Error('TIMEOUT')) };
+    })
+  ]);
+  
+  setTimeout(()=>abort_fn(),wait);
+  return abortable_promise;
+}
+
+function url_fetch(url, callback, options, timeout) {
+  wait__(fetch(url,options),timeout || 30000).then( res => {
+    if (res.status == 200)
+      return res.json();
+    else {
+      if (res.status == 401)
+        alert('未登录或登录超时');
+      return null;   // ignore other res.status
+    }
+  }, e => null ).then( data => {
+    if (callback) callback(data);  // data can be null
+  });
+}
+
+//----
+
+function notifyOwner(cmd, param, timeout) {
+  let ownerWin = window.parent.window;
+  if (ownerWin && ownerWin !== window) {
+    setTimeout( function() {
+      ownerWin.postMessage('<nbc-root>'+JSON.stringify({method:cmd,param:param}),'/');
+    },timeout);
+  }
+}
+
+function renewLoginState() {
+  let endTm = getCookie__('_tok_end_');
+  if (endTm) endTm = parseInt(endTm);
+  if (endTm && (endTm - Math.floor((new Date()).valueOf()/1000)) > 0) {
+    let tm = new Date((endTm - 14400) * 1000);
+    $('#login-state').html('当前已登录，登录时间：' + tm.toLocaleString());
+    $('#btn-logout').prop('disabled',false);
+  }
+  else {
+    $('#login-state').html('当前已退出登录');
+    $('#btn-logout').prop('disabled',true);
+  }
+}
+
+function temporaryDisable(node) {
+  let curr = $(node);
+  curr.prop('disabled',true);
+  setTimeout(() => curr.prop('disabled',false),1500);
+}
+
+$( () => {
+  $('#list-logout-list').on('click', ev => {
+    renewLoginState();
+  });
+  
+  $('#btn-logout').on('click', ev => {
+    temporaryDisable(ev.target);
+    
+    url_fetch('../../tee/logout', data => {
+      if (data === null || data.result != 'success')
+        return alert('请求失败');
+      
+      console.log('success logout');
+      renewLoginState();
+      
+      setTimeout( () => {
+        let firstItem = $('#list-tab > .list-group-item:first-child');
+        let tab = new bootstrap.Tab(firstItem);
+        tab.show();
+      }, 2500);  // shift to first page
+      notifyOwner('on_logout',[],2000);
+    }, {method:'POST'} );
+  });
+});
+
+//----
+
+var last_suo5_state = null;
+
+var suoStateTask = 0;
+var lastSuoState = 'CLOSED';
+
+function showState(state) {
+  let grayBtn = $('#abstract-state img[name="gray"]');
+  let yellowBtn = $('#abstract-state img[name="yellow"]');
+  let greenBtn = $('#abstract-state img[name="green"]');
+  
+  if (suoStateTask) {
+    clearInterval(suoStateTask);
+    suoStateTask = 0;
+  }
+  
+  if (state == 'CLOSED') {
+    $('#abstract-state-desc').text('服务已关闭');
+    grayBtn.removeClass('d-none');
+    yellowBtn.addClass('d-none');
+    greenBtn.addClass('d-none');
+  }
+  else if (state == 'RUNNING') {
+    $('#abstract-state-desc').text('服务已启动');
+    grayBtn.addClass('d-none');
+    yellowBtn.addClass('d-none');
+    greenBtn.removeClass('d-none');
+  }
+  else if (state == 'TO_RUN') {
+    $('#abstract-state-desc').text('服务开启中...');
+    
+    grayBtn.addClass('d-none');
+    yellowBtn.toggleClass('d-none',false);
+    greenBtn.toggleClass('d-none',true);
+    
+    let counter = 0;
+    suoStateTask = setInterval( () => {
+      counter += 1;
+      yellowBtn.toggleClass('d-none',(counter & 0x01) == 1);
+      greenBtn.toggleClass('d-none',(counter & 0x01) != 1);
+    },600);
+  }
+  else if (state == 'TO_CLOSE') {
+    $('#abstract-state-desc').text('服务关闭中...');
+    
+    greenBtn.addClass('d-none');
+    yellowBtn.toggleClass('d-none',false);
+    grayBtn.toggleClass('d-none',true);
+    
+    let counter = 0;
+    suoStateTask = setInterval( () => {
+      counter += 1;
+      yellowBtn.toggleClass('d-none',(counter & 0x01) == 1);
+      grayBtn.toggleClass('d-none',(counter & 0x01) != 1);
+    },600);
+  }
+  else {  // UNKNOWN
+    $('#abstract-state-desc').text('未知状态');
+    yellowBtn.removeClass('d-none');
+    greenBtn.addClass('d-none');
+    grayBtn.addClass('d-none');
+  }
+  lastSuoState = state;
+}
+
+function getState(retry_num, callback) {
+  wait__(fetch('../state'),10000).then( res => {
+    if (res.status == 200) return res.json();
+    if (callback) callback(null);
+    return null;
+  }, e => {  // e.message such like 'TIMEOUT'
+    if (retry_num)
+      getState(retry_num-1,callback);
+    else {
+      if (callback) callback(null);
+    }
+    return null;
+  }).then( data => {
+    if (data === null) return;
+    if (callback) callback(data);
+  });
+}
+
+function period_check_suo() {
+  getState(0, data => {
+    if (data && typeof data.active == 'boolean') {
+      showState(data.active? 'RUNNING': 'CLOSED');
+      last_suo5_state = data;
+    }
+  });
+}
+
+$( () => {
+  $('#list-config-list').on('click', ev => {
+    if (!last_suo5_state) return;
+    
+    $('#suo5-server-url').val(last_suo5_state.server_url || '');
+    $('#suo5-local-pos').val(last_suo5_state.hostname || '');
+    $('#suo5-user-psw').val(last_suo5_state.user_password || '');
+    $('#auto-start').prop('checked',!!last_suo5_state.auto_start);
+    $('#btn-submit-save').prop('disabled',true);
+  });
+  
+  $('#list-exopt-list').on('click', ev => {
+    if (!last_suo5_state) return;
+    
+    $('#disable-check').prop('checked',!!last_suo5_state.ex_opt?.disable_check);
+    $('#with-get-method').prop('checked',!!last_suo5_state.ex_opt?.with_get_method);
+    $('#with-no-gzip').prop('checked',!!last_suo5_state.ex_opt?.with_no_gzip);
+    $('#with-cookiejar').prop('checked',!!last_suo5_state.ex_opt?.with_cookiejar);
+    $('#with-user-agent').val(last_suo5_state.ex_opt?.user_agent || '');
+    $('#btn-submit-exopt').prop('disabled',true);
+  });
+  
+  $('#abstract-state').on('click', ev => {
+    if (!last_suo5_state) return;
+    
+    let newState = '', actName = $(ev.target).attr('name');
+    if (lastSuoState == 'RUNNING' && actName == 'green') // power off
+      newState = 'CLOSED';
+    else if (lastSuoState == 'CLOSED' && actName == 'gray') { // power on
+      if (!last_suo5_state.server_url)
+        return alert('suo5 连接尚未配置');
+      newState = 'RUNNING';
+    }
+    else return;
+    
+    url_fetch('../state', data => {
+      if (data && data.result == 'success') {
+        showState(newState == 'CLOSED'? 'TO_CLOSE': 'TO_RUN');
+        
+        let counter = 0;
+        let task = setInterval( () => {
+          counter += 1;
+          if (counter > 8) {  // max waiting 12 seconds
+            clearInterval(task);
+            showState('UNKNOWN');
+            return;
+          }
+          
+          getState(0, data2 => {
+            if (data2 && typeof data2.active == 'boolean') {
+              if (newState == 'CLOSED' && !data2.active)
+                ;
+              else if (newState == 'RUNNING' && data2.active)
+                ;
+              else return;  // continue next loop
+              
+              clearInterval(task);
+              showState(newState);
+              last_suo5_state = data2;
+            }
+            // else, ignore
+          })
+        }, 1500);  // check every 1.5 second
+      }
+      // else, ignore
+    }, {method:'POST',body:JSON.stringify({state:newState})} );
+  });
+  
+  $('#suo5-server-url, #suo5-user-psw, #auto-start').on('change', ev => {
+    $('#btn-submit-save').prop('disabled',false);
+  });
+  
+  $('#suo5-server-url, #suo5-user-psw').on('keypress', ev => {
+    $('#btn-submit-save').prop('disabled',false);
+  });
+  
+  $('#btn-submit-save').on('click', ev => {
+    if (!last_suo5_state) return;
+    
+    let server_url = $('#suo5-server-url').val().trim();
+    if (server_url.slice(0,4) != 'http')
+      return alert('suo5 服务的连接地址无效');
+    
+    let user_password = $('#suo5-user-psw').val().trim();
+    if (user_password.length > 0 && user_password.split(':').length != 2)
+      return alert('用户密码格式错误');
+    
+    // temporaryDisable(ev.target);
+    let auto_start = $('#auto-start').prop('checked');
+    let body = {server_url,user_password,auto_start};
+    url_fetch('../change_config', data => {
+      if (data?.result === 'success') {
+        $('#btn-submit-save').prop('disabled',true);
+        alert('操作成功');
+        period_check_suo();
+      }
+      else alert('操作失败');
+    },{method:'POST',body:JSON.stringify(body)} );
+  });
+  
+  //----
+  
+  $('#disable-check, #with-get-method, #with-no-gzip, #with-cookiejar, #with-user-agent').on('change', ev => {
+    $('#btn-submit-exopt').prop('disabled',false);
+  });
+  
+  $('#with-user-agent').on('keypress', ev => {
+    $('#btn-submit-exopt').prop('disabled',false);
+  });
+  
+  $('#btn-submit-exopt').on('click', ev => {
+    if (!last_suo5_state) return;
+    
+    let server_url = $('#suo5-server-url').val().trim();
+    if (server_url.slice(0,4) != 'http')
+      return alert('suo5 服务的连接地址无效');
+    
+    let disable_check = $('#disable-check').prop('checked');
+    let with_get_method = $('#with-get-method').prop('checked');
+    let with_no_gzip = $('#with-no-gzip').prop('checked');
+    let with_cookiejar = $('#with-cookiejar').prop('checked');
+    let user_agent = $('#with-user-agent').val().trim();
+    
+    // temporaryDisable(ev.target);
+    let body = {disable_check,with_get_method,with_no_gzip,with_cookiejar,user_agent};
+    url_fetch('../change_exopt', data => {
+      if (data?.result === 'success') {
+        $('#btn-submit-exopt').prop('disabled',true);
+        alert('操作成功');
+        period_check_suo();
+      }
+      else alert('操作失败');
+    },{method:'POST',body:JSON.stringify(body)} );
+  });
+  
+  //----
+  
+  getState(2, data => {  // try 2 more time if meet error
+    if (data && typeof data.active == 'boolean') {
+      showState(data.active? 'RUNNING': 'CLOSED');
+      last_suo5_state = data;
+      
+      setInterval(period_check_suo,60000);  // period check every 60 seconds
+    }
+    else console.log('error: suo5 state is unknown');
+  });
+});
+</script>
+
+</body>
+</html>

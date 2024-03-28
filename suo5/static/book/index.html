@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="favicon.ico">
+<link href="../common/css/bootstrap.min.css" rel="stylesheet">
+<link href="../common/css/highlightjs.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+<style>
+#md-txt-view blockquote {
+  margin-left: 1rem;
+}
+#md-txt-view code.inline-code {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  white-space: break-spaces;
+  color: black;
+  background-color: rgba(175,184,193,0.2);
+  border-radius: 5px;
+}
+
+.my-hljs {
+  margin: 0.5em 0 1rem;
+  padding: 0.75em;
+  background-color: #fff;
+  border-radius: 0.25rem;
+}
+.my-table td, .my-table th {
+  border: 1px solid #dfe2e5;
+  padding: 0.6em 1em;
+}
+.my-table > thead > tr {
+  background-color: #f4f0ec;
+}
+.my-table > tbody > tr:nth-child(2n) {
+  background-color: #f6f8fa;
+}
+
+.fns-keyword, .fns-hidden {
+  display: none !important;
+}
+</style>
+
+<div class="container-fluid p-2"><div class="row">
+  <div class="col-sm-4 col-md-3 pb-4 pe-0" id="md-nav-root" style="height:calc(100vh - 1rem); overflow-y:auto;">
+    <div class="list-group small" id="filelist-tab" role="tablist"></div>
+  </div>
+  <div class="col-sm-8 col-md-9 pe-3" id="viewer-root" style="height:calc(100vh - 1rem); overflow-y:auto;">
+    <div id="md-txt-view" class="p-3 rounded-3 w-100" style="background-color:rgb(248,249,250);"></div>
+    <div class="mt-3 border-1 d-none" id="fn-quoto-block">
+    <div class="mb-2" style="height:250px; border:1px solid lightgray; padding:0.5rem; overflow:hidden auto; border-radius:0.25rem" name="chating"></div>
+    <div class="input-group" style="margin-bottom:2.5rem">
+      <input type="text" class="form-control shadow-none" placeholder="在此输入您的问题" name="input-quoto">
+      <button class="btn btn-outline-secondary shadow-none" type="button" style="width:4.25rem" name="btn-quoto-submit"><span class="spinner-border spinner-border-sm d-none" role="status" name="in-asking"></span><span name="out-asking">提交</span></button>
+    </div>
+    </div>
+  </div>
+</div></div>
+
+<script src="../common/js/jquery-3.6.0.slim.min.js"></script>
+<script src="../common/js/highlight.min.js"></script>
+<script src="../common/js/bootstrap.min.js"></script>
+<script src="../common/js/markdown-it.min.js"></script>
+<script src="../common/js/markdown-it-attrs.min.js"></script>
+
+<script>
+var _markdown = markdownit( {
+  html: true,
+  highlight: function(str, language) {
+    if (language && hljs.getLanguage(language)) {
+      try {
+        return '<pre class="my-hljs"><code>' + hljs.highlight(str,{language,ignoreIllegals:true}).value + '</code></pre>';
+      } catch (__) {}
+    }
+    return '<pre class="my-hljs"><code>' + _markdown.utils.escapeHtml(str) + '</code></pre>';
+  },
+  linkify: false,
+}).use(markdownItAttrs);
+
+_markdown.renderer.rules.table_open = function(tokens, idx, options, env, renderer) {
+  return '<table class="my-table">';
+};
+
+_markdown.renderer.rules.code_inline = function(tokens, idx, options, env, renderer) {
+  var token = tokens[idx];
+  return '<code' + renderer.renderAttrs(token) + ' class="inline-code">' +
+    _markdown.utils.escapeHtml(token.content) + '</code>';
+};
+
+var MD_TAGS = [];
+var _last_md_tag = '';
+
+function wait__(promise_obj, wait) {
+  var abort_fn = null;
+  let abortable_promise = Promise.race([ promise_obj,
+    new Promise( function(resolve, reject) {
+      abort_fn = function() { reject(new Error('TIMEOUT')) };
+    })
+  ]);
+  
+  setTimeout(()=>abort_fn(),wait);
+  return abortable_promise;
+}
+
+function getMdFileList(retry_num, callback) {
+  wait__(fetch('./config.json'),10000).then( res => {
+    if (res.status == 200) return res.json();
+    if (callback) callback(null);
+    return null;
+  }, e => {  // e.message such like 'TIMEOUT'
+    if (retry_num)
+      getMdFileList(retry_num-1,callback);
+    else {
+      if (callback) callback(null);
+    }
+    return null;
+  }).then( data => {
+    if (data === null) return;
+    if (callback) callback(data);
+  });
+}
+
+function jumpToPage(off) {
+  if (off == 0) {  // go home
+    if (MD_TAGS.length)
+      location.hash = '#' + MD_TAGS[0];
+  }
+  else {
+    if (!_last_md_tag) return;
+    let idx = MD_TAGS.indexOf(_last_md_tag);
+    if (idx >= 0) idx += off;  // off=-1 or off=1
+    if (idx < 0 || idx >= MD_TAGS.length) return;
+    
+    location.hash = '#' + MD_TAGS[idx];
+  }
+}
+
+window.addEventListener('load', function() {
+  let mdNavShowing = true;
+  let mdNavNode  = document.querySelector('#filelist-tab');
+  let viewerNode = document.querySelector('#viewer-root');
+  
+  function generateNavlist(cfg) {
+    let scrollNode = document.querySelector('#md-nav-root');
+    let oldTop = scrollNode.scrollTop;
+    
+    let md_files = cfg.files || [];
+    let node = $(mdNavNode);
+    let s = '';
+    
+    md_files.forEach( (item, idx) => {
+      let currFile = _markdown.utils.escapeHtml(item);
+      let currTag = MD_TAGS[idx];
+      s += '<a class="list-group-item list-group-item-action text-truncate" data-tag="' + currTag + '" role="tab">' + currFile + '</a>';
+    });
+    node.html(s);
+    
+    scrollNode.scrollTop = oldTop;
+  }
+  
+  let firstFocusActive = true;
+  
+  function onHashChange(ev) {  // ev.oldURL ev.newURL
+    let newTag = location.hash.slice(1);
+    if (newTag && newTag.slice(-1) == '.')  // remove last '.'
+      newTag = newTag.slice(0,-1);
+    if (!newTag) return;
+    
+    let idx = MD_TAGS.indexOf(newTag);
+    if (idx < 0) return;
+    
+    let md_files = document.body.fns_config.files;
+    wait__(fetch(md_files[idx]+'.md'),30000).then( res => {
+      if (res.status == 200)
+        return res.text();
+      else return null;
+    },e => null).then( data => {
+      if (typeof data != 'string')
+        return alert('读取 md 文件失败');
+      
+      let viewer = $('#md-txt-view');
+      viewer.html(_markdown.render(data));
+      viewerNode.scrollTop = 0;
+      _last_md_tag = newTag;
+      
+      viewer.trigger('md_loaded');
+      
+      let mdNodes = mdNavNode.querySelectorAll('a.list-group-item');
+      let currNav = mdNodes[idx];
+      if (currNav) {
+        let actived = mdNavNode.querySelector('a.list-group-item.active');
+        if (actived) {
+          if (actived === currNav) return;  // active is same
+          actived.classList.remove('active');
+        }
+        currNav.classList.add('active');
+        if (mdNavShowing && firstFocusActive) {
+          firstFocusActive = false;
+          currNav.scrollIntoView(false);
+        }
+      }
+    });
+  }
+  
+  mdNavNode.addEventListener('click', event => {
+    let targ = event.target;
+    if (targ.nodeName != 'A') return;
+    
+    let newTag = $(targ).data('tag') + '';
+    if (!newTag || _last_md_tag === newTag) return;
+    let idx = MD_TAGS.indexOf(newTag);
+    if (idx < 0) return;
+    
+    location.hash = '#' + newTag;
+  });
+  
+  window.addEventListener('hashchange',onHashChange,false);
+  
+  setTimeout( () => {
+    if (window.outerWidth < 576) {  // min width of media is 576px
+      $('#md-nav-root').addClass('d-none');
+      mdNavShowing = false;
+    }
+  }, 600);
+  
+  getMdFileList(2, data => {  // try 2 more times when failed
+    if (data === null) return;
+    
+    let site_prop = {kind:'easy_book',app_ver:'0.1'};
+    data = data || {};
+    
+    let s = data.title;
+    if (s && typeof s == 'string') {
+      site_prop.title = s;
+      let ele = document.createElement('title');
+      ele.innerHTML = _markdown.utils.escapeHtml(s);
+      document.head.appendChild(ele);
+    }
+    s = data.desc;
+    if (s && typeof s == 'string') {
+      site_prop.desc = s;
+      let ele = document.createElement('meta');
+      ele.setAttribute('name','description');
+      ele.setAttribute('content',s);
+      document.head.appendChild(ele);
+    }
+    s = data.author;
+    if (s && typeof s == 'string') {
+      site_prop.author = s;
+      let ele = document.createElement('meta');
+      ele.setAttribute('name','author');
+      ele.setAttribute('content',s);
+      document.head.appendChild(ele);
+    }
+    s = data.keywords;
+    if (s && typeof s == 'string') {
+      site_prop.keywords = s;
+      let ele = document.createElement('meta');
+      ele.setAttribute('name','keywords');
+      ele.setAttribute('content',s);
+      document.head.appendChild(ele);
+    }
+    s = data.ver;
+    if (s && typeof s == 'string') {
+      site_prop.doc_ver = s;
+      let ele = document.createElement('meta');
+      ele.setAttribute('name','version');
+      ele.setAttribute('content',s);
+      document.head.appendChild(ele);
+    }
+    
+    s = data.checksum;
+    if (s && typeof s == 'string')
+      site_prop.checksum = s;
+    site_prop.doc_url = location.protocol + '//' + location.host + location.pathname;
+    
+    MD_TAGS = [];
+    let md_files = data.files || [];
+    md_files.forEach( (item, idx) => {
+      let s = item.split(' ')[0];
+      if (s && s.slice(-1) == '.') s = s.slice(0,-1);  // remove last '.'
+      MD_TAGS.push(s);
+    });
+    
+    document.body.fns_config = data;
+    generateNavlist(data);
+    
+    setTimeout( () => {
+      _last_md_tag = location.hash.slice(1);
+      
+      let idx = -1;
+      if (_last_md_tag) idx = MD_TAGS.indexOf(_last_md_tag);
+      if (idx < 0 && MD_TAGS.length)
+        jumpToPage(0);
+      else onHashChange();  // pseudo trigger event
+    }, 600);
+  });
+});
+</script>
+
+<script src="https://www.fn-share.com/www/tools/easy_book/nav_bar.0.1.js" defer></script>
+
+</body>
+</html>

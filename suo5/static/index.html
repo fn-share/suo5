@@ -1,0 +1,582 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title></title>
+<link href="//www.nb-chain.cn/www/common/css/bootstrap.min.css" rel="stylesheet">
+<link rel="icon" href="favicon.ico">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-md navbar-dark bg-dark pt-1 pb-0" id="nav-area">
+  <div class="container-fluid">
+    <a class="navbar-brand ps-3 pe-4" target="_self" href="../../" id="brand-name">NAS</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0"></ul>
+      <form class="d-flex">
+        <span style="color: #fff" id="acc_state"></span>
+      </form>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid d-none" id="hint-area">
+  <div class="row justify-content-center mt-3 pt-2 pb-2 d-none" id="no-device">
+    <div class="col-8 col-md-6 alert alert-warning pt-3 pb-3">
+      <h4 class="pt-4 pb-3">未发现设备！</h4>
+      <p>没找到匹配的设备，请在当前机器插入智能卡，然后刷新本页。</p>
+    </div>
+  </div>
+
+  <div class="row justify-content-center mt-3 pt-2 pb-2 d-none" id="no-account">
+    <div class="col-8 col-md-6 alert alert-warning pt-3 pb-3">
+      <h4 class="pt-4 pb-3">已找到身份卡，但尚未启用</h4>
+      <p>身份智能卡尚未初始化，<a target="_blank" href="../../tee/">请跳转到账户管理界面</a> 对设备实施初始化。</p>
+    </div>
+  </div>
+
+  <div class="row justify-content-center mt-3 pt-2 pb-2 d-none" id="req-abnormal">
+    <div class="col-8 col-md-6 alert alert-warning pt-3 pb-3">
+      <h4 class="pt-4 pb-3">系统异常！</h4>
+      <p>连接异常，请检查服务器与网络状态是否正常。</p>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid d-none" id="login-area">
+  <div class="row justify-content-center g-3 mt-5 pt-2 pb-2">
+    <form class="col-auto" onsubmit="return false">
+      <input type="text" autocomplete="username" value="TEE_USER" hidden>
+      <input class="form-control form-control-md shadow-none" type="password" autocomplete="current-password" placeholder="请输入登录密码" id="login-psw">
+      <input class="form-control form-control-md shadow-none mt-2 d-none" type="password" autocomplete="off" placeholder="再次输入密码" id="login-psw2">
+    </form>
+    <div class="col-auto">
+      <button type="button" class="btn btn-primary shadow-none mb-3" id="btn-main-login">登录</button>
+    </div>
+  </div>
+  <div class="row justify-content-center mt-2 d-none" id="desc-first-login">注意：首次登录系统将自动保存密<br>码，请牢记此密码以供下次使用。</div>
+</div>
+
+<div class="d-none" id="body-frames"></div>
+
+<style>
+#body-frames > iframe {
+  display: none;
+  padding: 0;
+  margin: 0;
+}
+</style>
+
+<script src="./common/js/jquery-3.6.0.slim.min.js"></script>
+<script src="./common/js/popper.min.js"></script>
+<script src="./common/js/bootstrap.min.js"></script>
+<script src="//www.nb-chain.cn/www/common/js/nbc_base.min.js"></script>
+
+<script>
+const PAGE_INFO = {
+  name: 'suo5',
+  title: 'suo5 connection',
+  tee_required: false,
+  menus: [
+   {name:'config',desc:'配置',url:'config.html'},
+   {name:'manual',desc:'使用说明',url:'book/index.html'},
+  ],
+};
+
+function getCookie__(name) {
+  if (document.cookie.length > 0) {
+    var iEnd, iStart = document.cookie.indexOf(name + '=');
+    if (iStart != -1) {
+      iStart = iStart + name.length + 1;
+      iEnd = document.cookie.indexOf(';',iStart);
+      if (iEnd == -1) iEnd = document.cookie.length;
+      return unescape(document.cookie.substring(iStart,iEnd));
+    }
+  }
+  return '';
+}
+
+function setCookie__(name,value,expireDays,path) {
+  expireDays = expireDays || 1;
+  var exDate = new Date();
+  exDate.setTime(exDate.getTime() + expireDays*86400000);  // 24*60*60*1000=86400000
+  path = path || '/';
+  document.cookie = name + '=' + escape(value) + ';expires=' + exDate.toGMTString() + ';path=' + path + ';';
+}
+
+function delCookie__(name,path) {
+  if (document.cookie.length > 0) {
+    var iStart = document.cookie.indexOf(name + '=');
+    if (iStart != -1) {
+      var exp = new Date();
+      exp.setTime(exp.getTime() - 1);
+      path = path || '/';
+      document.cookie = name + '=;expires=' + exp.toGMTString() + ';path=' + path + ';';
+    }
+  }
+}
+
+function wait__(promise_obj, wait) {
+  var abort_fn = null;
+  let abortable_promise = Promise.race([ promise_obj,
+    new Promise( function(resolve, reject) {
+      abort_fn = function() { reject(new Error('TIMEOUT')) };
+    })
+  ]);
+  
+  setTimeout(()=>abort_fn(),wait);
+  return abortable_promise;
+}
+
+function url_fetch(url, callback, options, timeout) {
+  wait__(fetch(url,options),timeout || 30000).then( res => {
+    if (res.status == 200)
+      return res.json();
+    else {
+      if (res.status == 401)
+        alert('未登录或登录超时');
+      return null;   // ignore other res.status
+    }
+  }, e => null ).then( data => {
+    if (callback) callback(data);  // data can be null
+  });
+}
+
+//----
+
+var ECDH = require('create-ecdh')('secp256k1');
+var CryptoJS = require('crypto-js');
+var CreateHash = require('create-hash');
+var Buffer = require('safe-buffer').Buffer;
+
+const TRUE_BYTE = Buffer.from('01','hex');
+const FALSE_BYTE = Buffer.from('00','hex');
+
+function gen_ecdh_key(pubkey33, re_gen) {
+  // ECDH.setPrivateKey(big.numToBuf(bigN));  // for debuging
+  if (re_gen) ECDH.generateKeys();
+  
+  let pubKeyPoint = ECDH.getPublicKey();
+  let nonce_x = pubKeyPoint.slice(1,33);  // nonce_y = pubKeyPoint.slice(33,65)
+  let flag = pubKeyPoint[64] & 0x01;
+  let targ_x = ECDH.computeSecret(pubkey33);
+  return [flag, nonce_x, targ_x];
+}
+
+function wrapCryptoBuf(msg) {
+  if (msg.words instanceof Array)  // msg is instance of CryptoJS.lib.WordArray
+    return msg;
+  else if (msg.buffer instanceof ArrayBuffer)  // msg is instance of Buffer
+    return CryptoJS.lib.WordArray.create(msg);
+  else return CryptoJS.enc.Utf8.parse(msg);    // assume msg is utf-8 string
+}
+
+function AesCbcEncrypt(prv, iv, msg) {
+  prv = wrapCryptoBuf(prv);
+  iv = wrapCryptoBuf(iv);
+  msg = wrapCryptoBuf(msg);
+  
+  let encrypted = CryptoJS.AES.encrypt(msg, prv, {
+    iv: iv,
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.ZeroPadding
+  });
+  // encrypted.toString() is base64-string, encrypted.ciphertext.toString() is hex-string
+  return encrypted.ciphertext;  // return CryptoJS.lib.WordArray
+}
+
+function encryptMsg(k_iv, msg) {
+  return AesCbcEncrypt(k_iv.slice(0,16),k_iv.slice(16,32),msg);
+}
+
+function adjustPin_(psw) {
+  if ((psw.length & 0x01) != 0) psw += 'f';
+  return Buffer.from(psw,'hex');
+}
+
+function genCipherForLogin(nonce, psw) {
+  psw = adjustPin_(psw);
+  
+  let r_plt = gen_ecdh_key(Buffer.from(last_plt_pubkey,'hex'),true); // [flag,nonce,k_iv]
+  let r_dev = gen_ecdh_key(Buffer.from(last_dev_pubkey,'hex'),false);
+  
+  // args: len1 + psw + len1 + nonce
+  nonce = Buffer.from(nonce,'hex');
+  args = Buffer.concat([Buffer.from([psw.length]),psw,Buffer.from([nonce.length]),nonce]);
+  
+  args = encryptMsg(CreateHash('sha256').update(r_plt[2]).digest(),args);
+  args = encryptMsg(CreateHash('sha256').update(r_dev[2]).digest(),args);
+  return (r_plt[0]==1?'03':'02') + r_plt[1].toString('hex') + args.toString();
+}
+
+//----
+
+var nav_height = 0;
+var all_frames = null;
+var all_nav_items = null;
+
+var tee_state  = 'ERR_REQUEST_FAIL';
+var has_login  = false;
+var ever_login = false;
+
+var last_plt_pubkey  = '';
+var last_dev_pubkey  = '';
+var last_alt_pubkey  = '';
+var last_base36_name = '';
+
+var tokEnd = getCookie__('_tok_end_');
+if (!tokEnd || Math.floor((new Date()).valueOf()/1000) >= (parseInt(tokEnd)-300))  // 300 is 5 minutes
+  tokEnd = ''; // access token is un-available
+
+function getState(retry_num, renew, callback) {
+  let url = '../../tee/state';
+  if (renew) url += '?renew=1';
+  
+  wait__(fetch(url),10000).then( res => {
+    if (res.status == 200) return res.json();
+    if (callback) callback(null);
+    return null;
+  }, e => {  // e.message such like 'TIMEOUT'
+    if (retry_num)
+      getState(retry_num-1,renew,callback);
+    else {
+      tee_state = 'ERR_REQUEST_FAIL';
+      $('#acc_state').text('通信异常');
+      if (callback) callback(null);
+    }
+    return null;
+  }).then( data => {
+    if (data === null) return;
+    tee_state = data.state;
+    
+    let desc;
+    if (tee_state == 'NORMAL' || tee_state == 'NO_PASSWD')
+      desc = data.nickname || 'untitled';
+    else if (tee_state == 'ERR_NO_CARD' && typeof data.has_login == 'number')
+      desc = data.nickname || 'untitled';
+    else if (tee_state == 'ERR_NO_ACCOUNT')
+      desc = '未创建账号';
+    else if (tee_state == 'ERR_WAIT_IMPORT')
+      desc = '等待初始化';
+    else {
+      if (tee_state == 'ERR_NO_CARD') {
+        if (PAGE_INFO.tee_required)
+          desc = '未发现设备';
+        else desc = '';
+      }
+      else desc = '设备异常';
+    }
+    $('#acc_state').text(desc);
+    
+    if (callback) callback(data);
+  });
+}
+
+function updateTeeState(renew) {
+  getState(2,renew, data => {   // retry 2 times more, total 3 times
+    // tee_state = 'ERR_NO_ACCOUNT';
+    if (tee_state == 'ERR_NO_CARD') {
+      last_base36_name = data.base36;
+      if (PAGE_INFO.tee_required)
+        $('#hint-area,#no-device').removeClass('d-none');
+      else {
+        last_plt_pubkey = '';
+        last_dev_pubkey = '';
+        last_alt_pubkey = '';
+        
+        if (tokEnd && data.has_login) {
+          all_nav_items.removeClass('disabled');
+          ever_login = true;
+          has_login = true;  // success auto login
+          whenSuccLogin();
+        }
+        else {
+          $('#login-psw2').toggleClass('d-none',!data.first_visit);
+          $('#desc-first-login').toggleClass('d-none',!data.first_visit);
+          $('#login-area').removeClass('d-none');
+          $('#login-psw').focus();
+        }
+      }
+    }
+    else if (tee_state == 'ERR_NO_ACCOUNT' || tee_state == 'ERR_WAIT_IMPORT') {
+      $('#hint-area, #no-account').removeClass('d-none');
+    }
+    else if (tee_state == 'NO_PASSWD') {
+      last_plt_pubkey = data.plt_pubkey;
+      last_dev_pubkey = data.dev_pubkey;
+      last_alt_pubkey = data.alt_pubkey;
+      last_base36_name = data.base36;
+      $('#hint-area, #wait-reset-psw').removeClass('d-none');
+    }
+    else if (tee_state != 'NORMAL') {  // ERR_UNKNOWN, ERR_REQUEST_FAIL
+      $('#hint-area, #req-abnormal').removeClass('d-none');
+    }
+    else {  // is 'NORMAL', next will try login
+      last_plt_pubkey = data.plt_pubkey;
+      last_dev_pubkey = data.dev_pubkey;
+      last_alt_pubkey = data.alt_pubkey;
+      last_base36_name = data.base36;
+      
+      if (tokEnd && data.has_login) {  // already login, data.has_login should be false if server restarted
+        all_nav_items.removeClass('disabled');
+        ever_login = true;
+        has_login = true;  // success auto login
+        whenSuccLogin();
+      }
+      else {
+        $('#login-psw2').addClass('d-none');
+        $('#desc-first-login').addClass('d-none');
+        $('#login-area').removeClass('d-none');
+        $('#login-psw').focus();
+      }
+    }
+  });
+}
+
+function _checkPswFormat(psw) {
+  return psw.match(/^\d{8}$/)
+}
+
+function temporaryDisable(node) {
+  let curr = $(node);
+  curr.prop('disabled',true);
+  setTimeout(() => curr.prop('disabled',false),1500);
+}
+
+function _loginAccount(targ) {
+  let psw = $('#login-psw').val().trim();
+  if (!psw) return alert('密码不能为空');
+  if (!_checkPswFormat(psw))
+    return alert('密码格式不正确');
+  
+  if (targ) temporaryDisable(targ);
+  
+  url_fetch('../../tee/query_login', data => {
+    if (data === null || data.result != 'success') return alert('请求失败');
+    
+    let cipher = genCipherForLogin(data.nonce,psw);
+    url_fetch('../../tee/login', data2 => {
+      if (data2 === null) return alert('请求失败');
+      
+      if (data2.result == 'success') {  // pass _tee_tok_=xxx, by server accessing cookie
+        $('#login-psw').val('');
+        $('#login-area').addClass('d-none');
+        
+        console.log('success login');
+        ever_login = true;
+        has_login = true;
+        whenSuccLogin();
+      }
+      else if (data2.result == 'failed') {
+        if (data2.reason == 'TEE_ERROR' && data2.error.code == '6982') // SECURITY_NOT_SATISFIED
+          alert('登录验证失败');
+        else alert('操作失败：' + data2.reason);
+      }
+      // else, ignore
+    }, {method:'POST',body:JSON.stringify({cipher:cipher})} );
+  });
+}
+
+function _loginAccount2(targ) {   // testing user login
+  let psw = $('#login-psw').val().trim();
+  if (!psw) return alert('密码不能为空');
+  if (!$('#login-psw2').hasClass('d-none')) {
+    let psw2 = $('#login-psw2').val().trim();
+    if (psw != psw2) return alert('两次输入密码不一致');
+  }
+  
+  if (targ) temporaryDisable(targ);
+  
+  psw = CreateHash('sha256').update(Buffer.from('PSW:'+psw)).digest().toString('hex');
+  url_fetch('../../tee/login', data2 => {
+    if (data2 === null) return alert('请求失败');
+    
+    if (data2.result == 'success') {  // pass _tee_tok_=xxx, by server accessing cookie
+      $('#login-psw').val('');
+      $('#login-psw2').val('');
+      $('#login-area').addClass('d-none');
+      
+      console.log('success login');
+      ever_login = true;
+      has_login = true;
+      whenSuccLogin();
+    }
+    else if (data2.result == 'failed') {
+      alert('操作失败：' + data2.reason);
+    }
+    // else, ignore
+  }, {method:'POST',body:JSON.stringify({password:psw})} );
+}
+
+function logoutAccount() {
+  url_fetch('../../tee/logout', data => {
+    if (data === null || data.result != 'success')
+      return alert('请求失败');
+    
+    has_login = false;
+    console.log('success logout');
+    whenSuccLogout();
+  }, {method:'POST'} );
+}
+
+$( () => {
+  $('head title').html(PAGE_INFO.title);
+  $('#brand-name').text('NAS | ' + PAGE_INFO.name);
+  
+  let navNode = $('#navbarContent .navbar-nav');
+  let bodyFrames = $('#body-frames');
+  PAGE_INFO.menus.forEach( item => {
+    navNode.append($(`<li class="nav-item"><a class="btn nav-link disabled" name="${item.name}">${item.desc}</a></li>`));
+    bodyFrames.append($(`<iframe name="${item.name}" border="0" frameborder="0" scrolling="yes" width="100%"></iframe>`));
+  });
+  
+  nav_height = $('#nav-area').outerHeight();
+  all_frames = $('#body-frames > iframe');
+  all_nav_items = $('#navbarContent .nav-link');
+  
+  $('#login-psw').on('keypress', ev => {
+    if (ev.keyCode == 13) {
+      if (!last_dev_pubkey && tee_state == 'ERR_NO_CARD')
+        _loginAccount2(null);
+      else if (last_dev_pubkey)
+        _loginAccount(null);
+    }
+  });
+  
+  $('#btn-main-login').on('click', ev => {
+    if (!last_dev_pubkey && tee_state == 'ERR_NO_CARD')
+      _loginAccount2(ev.target);
+    else if (last_dev_pubkey)
+      _loginAccount(ev.target);
+  });
+  
+  //----
+  function winResize() {
+    let frameHeight = window.innerHeight - nav_height;
+    all_frames.each( (idx,node) => {
+      $(node).height(frameHeight);
+    });
+  }
+  
+  $(window).resize(winResize);
+  winResize();
+  
+  $('#acc_state').text('连接中...');
+  updateTeeState(true);  // smartcard maybe changed just now
+});
+
+function whenSuccLogin() {}   // waiting overwrite
+function whenSuccLogout() {}  // waiting overwrite
+
+
+//---- after login
+
+var current_frame = '';
+
+var interval_check_login = false;
+var waiting_relogin = false;
+
+function refreshLoginState() {
+  if (tee_state == 'NORMAL' || (tee_state == 'ERR_NO_CARD' && ever_login)) {
+    $('#hint-area').addClass('d-none');
+    
+    if (!waiting_relogin && has_login) {
+      $('#body-frames').removeClass('d-none');
+      $('#login-area').addClass('d-none');
+      all_nav_items.removeClass('disabled');
+    }
+    else {
+      if (waiting_relogin) waiting_relogin = false;
+      
+      $('#body-frames').addClass('d-none');
+      $('#login-area').removeClass('d-none');
+      $('#login-psw').focus();
+      all_nav_items.addClass('disabled');
+    }
+  }
+  else {
+    $('#hint-area, #login-area, #body-frames').addClass('d-none');
+    all_nav_items.addClass('disabled');
+  }
+}
+
+function _navClick(navName) {
+  if (!has_login) return;
+  
+  all_frames.each( (idx,node) => {
+    node = $(node);
+    if (node.attr('name') === navName) {
+      node.css('display','block');
+      if (!node.attr('src')) {
+        let menuItem = PAGE_INFO.menus.find(item => item.name == navName);
+        node.attr('src',menuItem?.url || (navName + '.html'));
+      }
+      current_frame = navName;
+    }
+    else node.css('display','none');
+  });
+  
+  all_nav_items.each( (idx,node) => {
+    node = $(node);
+    node.toggleClass('active',node.attr('name') === navName);
+  });
+}
+
+function whenSuccLogin() {
+  interval_check_login = true;
+  refreshLoginState();
+  _navClick(current_frame || PAGE_INFO.menus[0].name);
+}
+
+function whenSuccLogout() {
+  refreshLoginState();
+}
+
+function loopCheckLogin() {
+  if (!interval_check_login) return;
+  
+  let endTm = getCookie__('_tok_end_');
+  if (!endTm || (parseInt(endTm) - Math.floor((new Date()).valueOf()/1000)) < 120) {
+    // 120 seconds before real expire time，that make sure most API call would be OK
+    waiting_relogin = true;
+    refreshLoginState();
+  }
+}
+
+$( () => {
+  all_nav_items.on('click', ev => {
+    let navName = $(ev.target).attr('name');
+    if (navName) _navClick(navName);
+  });
+  
+  window.addEventListener('message', function(msg) {
+    if (typeof msg == 'object' && msg.data)
+      msg = msg.data;
+    try {
+      if (typeof msg == 'string' && msg.slice(0,10) == '<nbc-root>')
+        msg = JSON.parse(msg.slice(10));
+      else return;  // ignore others
+    }
+    catch(e) {
+      console.log(e);
+      return;
+    }
+    
+    if (msg.method === 'update_nick') {
+      let nick = msg.param[0];
+      if (nick) $('#acc_state').text(nick);
+    }
+    else if (msg.method === 'on_logout') {
+      loopCheckLogin();
+    }
+  });
+  
+  setInterval(loopCheckLogin,60000);  // checking every 60 seconds
+});
+</script>
+
+</body>
+</html>
