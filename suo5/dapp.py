@@ -64,7 +64,7 @@ def init_suo5():
   global suo5_local_host, find_client_pid, client_user_psw, ex_opt
   
   uname = os.popen('uname -sm').read()  # 'Darwin x86_64' 'Linux aarch64' 'Linux x86_64'
-  uname = tuple(uname.lower.split())
+  uname = tuple(uname.lower().split())
   suo5_bin = _suo5_bin_list.get(uname,None)
   if suo5_bin is None:
     logger.error('suo5 client not support platform: %s',uname)
