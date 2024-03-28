@@ -1,7 +1,7 @@
 {
   "suo5_server_url": "https://suo.fn-share.com/stream",
   "suo5_local_host": "0.0.0.0:49000",
-  "find_client_pid": "ps -ef | grep 'suo5 -t http' | grep -v grep | awk '{print $2}'",
+  "find_client_pid": "ps -ef | grep 'suo5/suo5-' | grep -v grep | awk '{print $2}'",
   "client_user_psw": "",
   "auto_start_suo5": true,
   "ex_opt": {

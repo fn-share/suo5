@@ -13,14 +13,38 @@ _last_cred = ''       # current in using credential
 _newest_cred = ''     # newest credential when it re-applied
 _relay_server = None  # suo5 server: (ip:port)
 
+suo5_server_url = ''  # https://.../stream
+
+_rb_var_root = os.path.join(os.path.expanduser('~'),'red-brick','var')
+os.makedirs(_rb_var_root,exist_ok=True)
+
+def is_server_cfg_ok():
+  return isinstance(suo5_server_url,str) and suo5_server_url[:4] == 'http'
+
+def when_cred_updated(now_tm, keycode, relay_server):
+  global _newest_cred, _relay_server
+  
+  try:
+    _newest_cred = base64.b64encode(now_tm.to_bytes(4,'big') + unhexlify(keycode)).decode('utf-8')
+    
+    if auto_start_suo5 and is_server_cfg_ok():
+      _relay_server = (relay_server[0],8000)
+      if not _last_cred:
+        pid_str = find_suo5_PID()
+        if pid_str:
+          os.popen('kill -9 ' + pid_str).read()   # ensure only one suo5 client in running
+          logger.info('old suo5 client is killed.')
+        Timer(1,start_suo5_client).start()
+      else: check_alive.check_right_now = True
+  except: pass
+
+#----
+
 from . import runtime
-from root import relay_client
 
 _check_token_ok = runtime['check_token_ok']
 
 auto_start_suo5 = bool(runtime['config'].get('auto_start_suo5',False))
-
-suo5_server_url = ''  # https://.../stream
 
 suo5_local_host = ''  # 0.0.0.0:49000
 find_client_pid = ''  # ps -ef | grep 'suo5 -t http' | grep -v grep | awk '{print $2}'
@@ -33,26 +57,6 @@ _suo5_bin_list = {
   ('linux','x86_64'): 'suo5-linux-amd64',    # linux x86
   ('linux','aarch64'): 'suo5-linux-arm64' }  # linux arm
 suo5_bin = None
-
-def is_server_cfg_ok():
-  return isinstance(suo5_server_url,str) and suo5_server_url[:4] == 'http'
-
-def after_query_cred(now_tm, keycode, relay_server):
-  global _newest_cred, _relay_server
-  
-  try:
-    _newest_cred  = base64.b64encode(now_tm.to_bytes(4,'big') + unhexlify(keycode)).decode('utf-8')
-    
-    if auto_start_suo5 and is_server_cfg_ok():
-      _relay_server = (relay_server[0],8000)
-      if not _last_cred:
-        pid_str = find_suo5_PID()
-        if pid_str:
-          os.popen('kill -9 ' + pid_str).read()   # ensure only one suo5 client in running
-          logger.info('old suo5 client is killed.')
-        Timer(1,start_suo5_client).start()
-      else: check_alive.check_right_now = True
-  except: pass
 
 def init_suo5():
   global suo5_bin
@@ -73,8 +77,6 @@ def init_suo5():
   client_user_psw = cfg.get('client_user_psw','')
   ex_opt = cfg.get('ex_opt',{})
   
-  relay_client._after_query_cred = after_query_cred
-  
   import atexit
   check_alive.start()
   atexit.register(lambda: check_alive.exit())
@@ -92,8 +94,6 @@ def init_suo5():
     auto_start_suo5 = False  # meet error, avoid auto start
     return False
   
-  if relay_client._last_relay_time:
-    after_query_cred(relay_client._last_relay_time,relay_client._last_relay_key,relay_client._relay_server)
   return True
 
 def find_suo5_PID():
@@ -187,9 +187,25 @@ class CheckAlive(Thread):
       self.join()
   
   def run(self):
+    tr_login_file = os.path.join(_rb_var_root,'.tr_login')
+    tr_login_time = 0
+    
     counter = 0
     while self.is_alive() and self._active:
       counter += 1
+      
+      # check .tr_login changing every 40 seconds
+      if counter % 8 == 7:
+        try:
+          if os.path.isfile(tr_login_file):
+            modi_tm = os.stat(tr_login_file).st_mtime
+            if tr_login_time != modi_tm:
+              tr_login_time = modi_tm
+              b = open(tr_login_file,'rt').read().split(',')
+              if len(b) == 4:
+                when_cred_updated(int(b[0],b[1],(b[2],int(b[3])))
+        except:
+          logger.warning(traceback.format_exc())
       
       # check suo5 connection every 60 seconds normally
       if _relay_server and (self.check_right_now or (counter % 12) == 11):
