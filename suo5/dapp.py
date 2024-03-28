@@ -77,10 +77,6 @@ def init_suo5():
   client_user_psw = cfg.get('client_user_psw','')
   ex_opt = cfg.get('ex_opt',{})
   
-  import atexit
-  check_alive.start()
-  atexit.register(lambda: check_alive.exit())
-  
   if not suo5_local_host or len(suo5_local_host.split(':')) != 2:
     logger.error('invalid "suo5_local_host" in config.json')
     auto_start_suo5 = False  # meet error, avoid auto start
@@ -93,6 +89,10 @@ def init_suo5():
     logger.error('invalid "exopt.user_agent" in config.json')
     auto_start_suo5 = False  # meet error, avoid auto start
     return False
+  
+  import atexit
+  check_alive.start()
+  atexit.register(lambda: check_alive.exit())
   
   return True
 
@@ -195,7 +195,7 @@ class CheckAlive(Thread):
       counter += 1
       
       # check .tr_login changing every 40 seconds
-      if counter % 8 == 7:
+      if counter % 8 == 4:
         try:
           if os.path.isfile(tr_login_file):
             modi_tm = os.stat(tr_login_file).st_mtime
