@@ -18,6 +18,9 @@ suo5_server_url = ''  # https://.../stream
 _rb_var_root = os.path.join(os.path.expanduser('~'),'red-brick','var')
 os.makedirs(_rb_var_root,exist_ok=True)
 
+_rb_log_root = os.path.join(os.path.expanduser('~'),'red-brick','log')
+os.makedirs(_rb_log_root,exist_ok=True)
+
 def is_server_cfg_ok():
   return isinstance(suo5_server_url,str) and suo5_server_url[:4] == 'http'
 
@@ -116,7 +119,8 @@ def start_suo5_client():
   if ex_opt.get('with_cookiejar',False):
     ex_arg += '--jar '
   
-  sh_cmd = "nohup ./suo5/%s -t %s -l %s %s >/dev/null 2>&1 &" % (suo5_bin,suo5_server_url,suo5_local_host,ex_arg)
+  log_file = os.path.join(_rb_log_root,'suo5.dat')
+  sh_cmd = "nohup ./suo5/%s -t %s -l %s %s 2>&1 >%s &" % (suo5_bin,suo5_server_url,suo5_local_host,ex_arg,log_file)
   for i in range(2):    # try 2 times
     os.popen(sh_cmd).read()
     time.sleep(2)
