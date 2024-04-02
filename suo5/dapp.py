@@ -119,7 +119,7 @@ def start_suo5_client():
   if ex_opt.get('with_cookiejar',False):
     ex_arg += '--jar '
   
-  log_file = os.path.join(_rb_log_root,'suo5.dat')
+  log_file = os.path.join(_rb_log_root,'suo5.out')
   sh_cmd = "nohup ./suo5/%s -t %s -l %s %s 2>&1 >%s &" % (suo5_bin,suo5_server_url,suo5_local_host,ex_arg,log_file)
   for i in range(2):    # try 2 times
     os.popen(sh_cmd).read()
