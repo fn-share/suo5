@@ -4,15 +4,6 @@ import sys, os
 if sys.version_info.major < 3:
   raise Exception('only support python v3+')
 
-#---- config logger
-
-import logging
-
-_log_fmt = '%(asctime)s [%(name)s %(levelname)s] %(message)s'
-logging.basicConfig(level=logging.INFO,format=_log_fmt)
-
-logger = logging.getLogger(__name__)
-
 #---- dbg_loop
 
 import re, traceback
@@ -98,10 +89,19 @@ def _auto_locate_dapp():
 
 APP_NAME = _auto_locate_dapp()  # maybe many dapp-dir exists, you need denote one  # python3 dapps.py <dapp_name>
 
+#---- config logger
+
+import logging
+
+_log_fmt = '%(asctime)s [' + APP_NAME + ' %(name)s %(levelname)s] %(message)s'
+logging.basicConfig(level=logging.INFO,format=_log_fmt)
+
+logger = logging.getLogger(__name__)
+
 #---- prepare _lcns_info
 
-from dapp_lib.formatter import *
-from dapp_lib.lcns_loader import *
+from nbcc.dapp_lib.formatter import *
+from nbcc.dapp_lib.lcns_loader import *
 
 @compose((
   ('create_time',NI), ))
@@ -128,7 +128,7 @@ _lcns_info = _load_lcns_info() if RELAY_SERVER else None  # when connect to tr-c
 
 import time, json, importlib
 
-from dapp_lib.dapp_cfg import DappConfig
+from nbcc.dapp_lib.dapp_cfg import DappConfig
 
 app = None
 runtime = {}
@@ -186,11 +186,11 @@ def localhost_main(tcp_port, config, dist_name, inDebug=False):
   from twisted.web.server import Site
   
   os.environ['APP_NAME'] = ''
-  runtime['config'] = config
   
   # import relayed-flask basic framework
-  dapp = importlib.import_module(dist_name + '.dapp')  # should call dapp_http.config_http() first
-  local_web = importlib.import_module(dist_name + '.local_web')
+  logger.info('start import %s.dapp ...',dist_name)
+  local_web = importlib.import_module(dist_name + '.local_web')  # already call dapp_http.config_http()
+  dapp = importlib.import_module(dist_name + '.dapp')
   
   _localhost_res = Resource()
   _localhost_res.putChild(APP_NAME.encode('utf-8'),dapp_http._flask_site)
@@ -245,8 +245,9 @@ def root_main(config, relay_serv, dist_name, inDebug=False):
     conn_num = _localaccess(dist_name) or 2   # default connection num is 2
     dapp_http.start_web_service((b[0],int(b[1])),None,conn_num,dist_name)
   
-  dapp = importlib.import_module(dist_name + '.dapp')  # should call dapp_http.config_http() first
-  local_web = importlib.import_module(dist_name + '.local_web')
+  logger.info('start import %s.dapp ...',dist_name)
+  local_web = importlib.import_module(dist_name + '.local_web') # already call dapp_http.config_http()
+  dapp = importlib.import_module(dist_name + '.dapp')
   
   from twisted.internet import reactor
   reactor.run()     # holding here
@@ -259,6 +260,7 @@ if __name__ == '__main__':
   runtime['check_token_ok'] = check_token_ok
   
   config = DappConfig.load(APP_NAME,False,os.path.join(APP_NAME,'config.json'))
+  runtime['config'] = config
   inDebug = bool(sys.flags.debug and sys.flags.interactive)
   
   if RELAY_SERVER:  # connect to tr-client

@@ -6,7 +6,7 @@ from binascii import hexlify
 from twisted.internet import reactor
 from twisted.web.wsgi import WSGIResource
 
-from dapp_lib.dapp_conn import HttpCtrlBlock, MyHttpFactory
+from nbcc.dapp_lib.dapp_conn import HttpCtrlBlock, MyHttpFactory
 
 _app = None
 _flask_site = None
