@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -424,7 +424,7 @@ function logoutAccount() {
 
 $( () => {
   $('head title').html(PAGE_INFO.title);
-  $('#brand-name').text('NAS | ' + PAGE_INFO.name);
+  $('#brand-name').text('NAS' + (PAGE_INFO.name? ' | '+PAGE_INFO.name: ''));
   
   let navNode = $('#navbarContent .navbar-nav');
   let bodyFrames = $('#body-frames');
