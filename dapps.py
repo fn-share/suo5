@@ -4,6 +4,15 @@ import sys, os
 if sys.version_info.major < 3:
   raise Exception('only support python v3+')
 
+#---- config logger
+
+import logging
+
+_log_fmt = '%(asctime)s [%(name)s %(levelname)s] %(message)s'
+logging.basicConfig(level=logging.INFO,format=_log_fmt)
+
+logger = logging.getLogger(__name__)
+
 #---- dbg_loop
 
 import re, traceback
@@ -88,15 +97,6 @@ def _auto_locate_dapp():
   raise RuntimeError('can not locate dapp root directory')
 
 APP_NAME = _auto_locate_dapp()  # maybe many dapp-dir exists, you need denote one  # python3 dapps.py <dapp_name>
-
-#---- config logger
-
-import logging
-
-_log_fmt = '%(asctime)s [' + APP_NAME + ' %(name)s %(levelname)s] %(message)s'
-logging.basicConfig(level=logging.INFO,format=_log_fmt)
-
-logger = logging.getLogger(__name__)
 
 #---- prepare _lcns_info
 
@@ -195,7 +195,7 @@ def localhost_main(tcp_port, config, dist_name, inDebug=False):
   _localhost_res = Resource()
   _localhost_res.putChild(APP_NAME.encode('utf-8'),dapp_http._flask_site)
   
-  print('\nstarting web service (http://localhost:%s/%s/) ...\n' % (tcp_port,dist_name))
+  print('\nstarting web server (http://localhost:%s/%s/) ...\n' % (tcp_port,dist_name))
   reactor.listenTCP(tcp_port,Site(_localhost_res))
   reactor.run()
 
@@ -249,6 +249,7 @@ def root_main(config, relay_serv, dist_name, inDebug=False):
   local_web = importlib.import_module(dist_name + '.local_web') # already call dapp_http.config_http()
   dapp = importlib.import_module(dist_name + '.dapp')
   
+  print('\nconnect to tr-client (%s:%s)\n' % (b[0],b[1]))
   from twisted.internet import reactor
   reactor.run()     # holding here
 
