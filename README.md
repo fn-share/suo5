@@ -11,8 +11,6 @@
 2. 2a, 2b, 2c
 3. 3a, 3b, 3c
 
-&nbsp;
-
 ### 如何安装？
 
 第 1 步: 打开 NBC NAS 设备主页，进入 “管理 | 安装应用” 菜单
@@ -22,5 +20,3 @@
 ``` bash
 https://github.com/fn-share/suo5/archive/refs/heads/main.zip
 ```
-
-&nbsp;
