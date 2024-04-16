@@ -23,6 +23,10 @@
   border-radius: 5px;
 }
 
+#md-txt-view strong {
+  color: darkred;
+}
+
 .my-hljs {
   margin: 0.5em 0 1rem;
   padding: 0.75em;
@@ -42,6 +46,10 @@
 
 .fns-keyword, .fns-hidden {
   display: none !important;
+}
+
+.sub-level {
+  padding-left: 1.5rem !important;
 }
 </style>
 
@@ -154,8 +162,10 @@ window.addEventListener('load', function() {
     
     md_files.forEach( (item, idx) => {
       let currFile = _markdown.utils.escapeHtml(item);
-      let currTag = MD_TAGS[idx];
-      s += '<a class="list-group-item list-group-item-action text-truncate" data-tag="' + currTag + '" role="tab">' + currFile + '</a>';
+      let currTag  = MD_TAGS[idx];
+      let subClass = currTag.split('.');
+      subClass = subClass.length >= 2 && subClass[1]? ' sub-level': '';
+      s += '<a class="list-group-item list-group-item-action text-truncate' + subClass + '" data-tag="' + currTag + '" role="tab">' + currFile + '</a>';
     });
     node.html(s);
     

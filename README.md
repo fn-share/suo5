@@ -1,18 +1,26 @@
-suo5 manager for NBC NAS
-------------------------
+ NBC NAS  suo5 
+--------------------------------
 
 &nbsp;
 
-### How to install
+### 
 
-step 1: open "manager" page of your NBC-NAS website.
+ NBC NAS 
 
-step 2: copy following URL and paste to "download URL" editor in "manager" page.
+1. 1a, 1b, 1c
+2. 2a, 2b, 2c
+3. 3a, 3b, 3c
+
+&nbsp;
+
+### 
+
+ 1 :  NBC NAS   |  
+
+ 2   URL     
 
 ``` bash
 https://github.com/fn-share/suo5/archive/refs/heads/main.zip
 ```
-
-step 3: click "install" button in "manager" page.
 
 &nbsp;
