@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 import os, time, struct, base64, json, traceback
 from threading import Thread, Timer
 from binascii import unhexlify
+from urllib.request import urlopen
 
 #----
 
@@ -107,12 +108,20 @@ def find_suo5_PID():
 FIXED_SUO5_UA = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.1.2.3'
 
 def start_suo5_client():
-  global _last_cred
+  global _last_cred, suo5_server_ip
   
   ua = ex_opt.get('user_agent')
   if ua == FIXED_SUO5_UA or ex_opt.get('disable_check',False):
     ex_arg = "--ua '%s' " % (ua,)
-  else: ex_arg = "--ua '%s %s' " % (ua,_newest_cred)
+  else:
+    ex_arg = "--ua '%s %s' " % (ua,_newest_cred)
+    
+    if not suo5_server_ip and suo5_server_url:
+      try:
+        b = urlopen(suo5_server_url,timeout=10).read().split(b',')
+        if len(b) >= 3 and b[0] == b'OK':
+          suo5_server_ip = b[1]
+      except: pass
   
   if client_user_psw:
     ex_arg += "--auth '%s' " % (client_user_psw,)
@@ -135,8 +144,6 @@ def start_suo5_client():
   return False
 
 def check_suo5_alive():
-  global suo5_server_ip
-  
   if not _last_cred: return False
   if ex_opt.get('disable_check',False): return True  # avoid alive check, take as aliving
   
@@ -148,14 +155,7 @@ def check_suo5_alive():
   
   try:
     for i in range(3):    # max try 3 times
-      s = os.popen(sh_cmd).read()
-      b = s.split(':')
-      if b[0] == 'OK':
-        if len(b) >= 3:   # OK:<ip>:<port>
-          try:
-            port = int(b[-1])
-            suo5_server_ip = ':'.join(b[1:-1])  # IP can contains ':'
-          except: pass
+      if os.popen(sh_cmd).read()[:2] == 'OK':
         return True
       time.sleep(2)
   except: pass
@@ -213,7 +213,7 @@ class CheckAlive(Thread):
       counter += 1
       
       # check login changing every 40 seconds
-      if counter % 8 == 4 and not ex_opt.get('disable_check',False):
+      if counter % 8 == 4 and not ex_opt.get('disable_check',False) and suo5_server_ip:
         try:
           if os.path.isfile(tr_login_file):
             modi_tm = os.stat(tr_login_file).st_mtime
@@ -222,14 +222,11 @@ class CheckAlive(Thread):
               
               line = ''
               b = open(tr_login_file,'rt').read().splitlines()
-              if len(b) == 1:   # only one tr-client
-                line = b[0]
-              elif suo5_server_ip:
-                s = ',' + suo5_server_ip + ','
-                for ln in b:
-                  if ln.find(s) > 0:
-                    line = ln
-                    break
+              s = ',' + suo5_server_ip + ','
+              for ln in b:
+                if ln.find(s) > 0:
+                  line = ln
+                  break
               
               b2 = line.split(',')
               if len(b2) == 4:  # should be: "now,keycode,server_ip,server_port"
