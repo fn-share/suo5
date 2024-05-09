@@ -14,6 +14,7 @@ _newest_cred = ''     # newest credential when it re-applied
 _relay_server = None  # suo5 server: (ip:port)
 
 suo5_server_url = ''  # https://.../stream
+suo5_server_ip  = ''
 
 _rb_var_root = os.path.join(os.path.expanduser('~'),'red-brick','var')
 os.makedirs(_rb_var_root,exist_ok=True)
@@ -22,7 +23,7 @@ _rb_log_root = os.path.join(os.path.expanduser('~'),'red-brick','log')
 os.makedirs(_rb_log_root,exist_ok=True)
 
 def is_server_cfg_ok():
-  return isinstance(suo5_server_url,str) and suo5_server_url[:4] == 'http'
+  return isinstance(suo5_server_url,str) and suo5_server_url[:4] == 'http'  # http or https
 
 def when_cred_updated(now_tm, keycode, relay_server):
   global _newest_cred, _relay_server
@@ -103,12 +104,15 @@ def init_suo5():
 def find_suo5_PID():
   return os.popen(find_client_pid).read()
 
+FIXED_SUO5_UA = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.1.2.3'
+
 def start_suo5_client():
   global _last_cred
   
-  if ex_opt.get('disable_check',False):
-    ex_arg = "--ua '%s' " % (ex_opt.get('user_agent'),)
-  else: ex_arg = "--ua '%s %s' " % (ex_opt.get('user_agent'),_newest_cred)
+  ua = ex_opt.get('user_agent')
+  if ua == FIXED_SUO5_UA or ex_opt.get('disable_check',False):
+    ex_arg = "--ua '%s' " % (ua,)
+  else: ex_arg = "--ua '%s %s' " % (ua,_newest_cred)
   
   if client_user_psw:
     ex_arg += "--auth '%s' " % (client_user_psw,)
@@ -131,6 +135,8 @@ def start_suo5_client():
   return False
 
 def check_suo5_alive():
+  global suo5_server_ip
+  
   if not _last_cred: return False
   if ex_opt.get('disable_check',False): return True  # avoid alive check, take as aliving
   
@@ -141,8 +147,15 @@ def check_suo5_alive():
   sh_cmd = 'curl -s %s--max-time 10 -H "User-Agent: %s %s" -x socks5h://%s %s' % (auth_arg,user_agent,_last_cred,suo5_local_host,suo5_server_url)
   
   try:
-    for i in range(3):  # max try 3 times
-      if os.popen(sh_cmd).read() == 'OK':
+    for i in range(3):    # max try 3 times
+      s = os.popen(sh_cmd).read()
+      b = s.split(':')
+      if b[0] == 'OK':
+        if len(b) >= 3:   # OK:<ip>:<port>
+          try:
+            port = int(b[-1])
+            suo5_server_ip = ':'.join(b[1:-1])  # IP can contains ':'
+          except: pass
         return True
       time.sleep(2)
   except: pass
@@ -199,16 +212,29 @@ class CheckAlive(Thread):
     while self.is_alive() and self._active:
       counter += 1
       
-      # check .tr_login changing every 40 seconds
-      if counter % 8 == 4:
+      # check login changing every 40 seconds
+      if counter % 8 == 4 and not ex_opt.get('disable_check',False):
         try:
           if os.path.isfile(tr_login_file):
             modi_tm = os.stat(tr_login_file).st_mtime
             if tr_login_time != modi_tm:
               tr_login_time = modi_tm
-              b = open(tr_login_file,'rt').read().split(',')
-              if len(b) == 4:
-                when_cred_updated(int(b[0]),b[1],(b[2],int(b[3])))
+              
+              line = ''
+              b = open(tr_login_file,'rt').read().splitlines()
+              if len(b) == 1:   # only one tr-client
+                line = b[0]
+              elif suo5_server_ip:
+                s = ',' + suo5_server_ip + ','
+                for ln in b:
+                  if ln.find(s) > 0:
+                    line = ln
+                    break
+              
+              b2 = line.split(',')
+              if len(b2) == 4:  # should be: "now,keycode,server_ip,server_port"
+                server = (b2[2],int(b2[3]))
+                when_cred_updated(int(b2[0]),b2[1],server)
         except:
           logger.warning(traceback.format_exc())
       
