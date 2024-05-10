@@ -34,7 +34,7 @@ def when_cred_updated(now_tm, keycode, relay_server):
     _newest_cred = base64.b64encode(now_tm.to_bytes(4,'big') + unhexlify(keycode)).decode('utf-8')
     
     if auto_start_suo5 and is_server_cfg_ok():
-      _relay_server = (relay_server[0],8000)
+      _relay_server = (relay_server[0],suo5_server_port)
       if not _last_cred:
         pid_str = find_suo5_PID()
         if pid_str:
