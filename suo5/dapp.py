@@ -14,8 +14,9 @@ _last_cred = ''       # current in using credential
 _newest_cred = ''     # newest credential when it re-applied
 _relay_server = None  # suo5 server: (ip:port)
 
-suo5_server_url = ''  # https://.../stream
-suo5_server_ip  = ''
+suo5_server_url  = ''  # https://.../stream
+suo5_server_ip   = ''
+suo5_server_port = 8000
 
 _rb_var_root = os.path.join(os.path.expanduser('~'),'red-brick','var')
 os.makedirs(_rb_var_root,exist_ok=True)
@@ -32,7 +33,6 @@ def when_cred_updated(now_tm, keycode, relay_server):
   try:
     _newest_cred = base64.b64encode(now_tm.to_bytes(4,'big') + unhexlify(keycode)).decode('utf-8')
     
-    print('here2',_newest_cred,auto_start_suo5,bool(_last_cred))
     if auto_start_suo5 and is_server_cfg_ok():
       _relay_server = (relay_server[0],8000)
       if not _last_cred:
@@ -109,17 +109,17 @@ def find_suo5_PID():
 FIXED_SUO5_UA = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.1.2.3'
 
 def start_suo5_client():
-  global _last_cred, suo5_server_ip
+  global _last_cred, suo5_server_ip, suo5_server_port
   
   if not suo5_server_ip and suo5_server_url:
     if not ex_opt.get('with_get_method',False):  # use POST method
       try:
         b = urlopen(suo5_server_url,timeout=10).read()[:64].split(b',')
         if len(b) >= 3 and b[0] == b'OK':
+          suo5_server_port = int(b[2])
           suo5_server_ip = b[1].decode('utf-8')
       except: pass
   
-  print('here3',suo5_server_ip,ex_opt)
   ua = ex_opt.get('user_agent')
   if ua != FIXED_SUO5_UA:
     ex_arg = "--ua '%s' " % (ua,)
@@ -136,7 +136,6 @@ def start_suo5_client():
   
   log_file = os.path.join(_rb_log_root,'suo5.out')
   sh_cmd = "nohup ./suo5/%s -t %s -l %s %s 2>&1 >%s &" % (suo5_bin,suo5_server_url,suo5_local_host,ex_arg,log_file)
-  print('here4',sh_cmd)
   for i in range(2):    # try 2 times
     os.popen(sh_cmd).read()
     time.sleep(2)
@@ -226,7 +225,7 @@ class CheckAlive(Thread):
               line = ''
               b = open(tr_login_file,'rt').read().splitlines()
               if not suo5_server_ip:
-                line = b[-1]     # get last line
+                line = b[-1]     # auto get last line
               else:
                 s = ',' + suo5_server_ip + ','
                 for ln in b:
@@ -235,7 +234,6 @@ class CheckAlive(Thread):
                     break
               
               b2 = line.split(',')
-              print('here',b2)
               if len(b2) == 4:  # should be: "now,keycode,server_ip,server_port"
                 server = (b2[2],int(b2[3]))
                 when_cred_updated(int(b2[0]),b2[1],server)
