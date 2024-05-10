@@ -119,6 +119,7 @@ def start_suo5_client():
           suo5_server_ip = b[1].decode('utf-8')
       except: pass
   
+  print('here3',suo5_server_ip,ex_opt)
   ua = ex_opt.get('user_agent')
   if ua == FIXED_SUO5_UA or ex_opt.get('disable_check',False):
     ex_arg = "--ua '%s' " % (ua,)
@@ -135,6 +136,7 @@ def start_suo5_client():
   
   log_file = os.path.join(_rb_log_root,'suo5.out')
   sh_cmd = "nohup ./suo5/%s -t %s -l %s %s 2>&1 >%s &" % (suo5_bin,suo5_server_url,suo5_local_host,ex_arg,log_file)
+  print('here4',sh_cmd)
   for i in range(2):    # try 2 times
     os.popen(sh_cmd).read()
     time.sleep(2)
