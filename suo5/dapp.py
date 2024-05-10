@@ -120,7 +120,7 @@ def start_suo5_client():
       try:
         b = urlopen(suo5_server_url,timeout=10).read().split(b',')
         if len(b) >= 3 and b[0] == b'OK':
-          suo5_server_ip = b[1]
+          suo5_server_ip = b[1].decode('utf-8')
       except: pass
   
   if client_user_psw:

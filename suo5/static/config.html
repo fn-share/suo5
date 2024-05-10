@@ -271,7 +271,7 @@ function showState(state) {
       counter += 1;
       yellowBtn.toggleClass('d-none',(counter & 0x01) == 1);
       greenBtn.toggleClass('d-none',(counter & 0x01) != 1);
-    },600);
+    },300);
   }
   else if (state == 'TO_CLOSE') {
     $('#abstract-state-desc').text('服务关闭中...');
@@ -285,7 +285,7 @@ function showState(state) {
       counter += 1;
       yellowBtn.toggleClass('d-none',(counter & 0x01) == 1);
       grayBtn.toggleClass('d-none',(counter & 0x01) != 1);
-    },600);
+    },300);
   }
   else {  // UNKNOWN
     $('#abstract-state-desc').text('未知状态');
@@ -347,6 +347,7 @@ $( () => {
   
   $('#abstract-state').on('click', ev => {
     if (!last_suo5_state) return;
+    if (lastSuoState == 'TO_CLOSE' || lastSuoState == 'TO_RUN') return; // in pending
     
     let newState = '', actName = $(ev.target).attr('name');
     if (lastSuoState == 'RUNNING' && actName == 'green') // power off
@@ -365,7 +366,7 @@ $( () => {
         let counter = 0;
         let task = setInterval( () => {
           counter += 1;
-          if (counter > 8) {  // max waiting 12 seconds
+          if (counter > 30) {  // max waiting 60 seconds
             clearInterval(task);
             showState('UNKNOWN');
             return;
@@ -385,7 +386,7 @@ $( () => {
             }
             // else, ignore
           })
-        }, 1500);  // check every 1.5 second
+        }, 2000);  // check every 2 seconds
       }
       // else, ignore
     }, {method:'POST',body:JSON.stringify({state:newState})} );
