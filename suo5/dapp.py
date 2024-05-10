@@ -112,7 +112,7 @@ def start_suo5_client():
   
   ua = ex_opt.get('user_agent')
   if not suo5_server_ip and suo5_server_url:
-    if ua == FIXED_SUO5_UA and not ex_opt.get('disable_check',False):  # tcp relay style
+    if not ex_opt.get('with_get_method',False):  # use POST method
       try:
         b = urlopen(suo5_server_url,timeout=10).read().split(b',')
         if len(b) >= 3 and b[0] == b'OK':
