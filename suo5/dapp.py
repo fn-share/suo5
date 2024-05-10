@@ -111,17 +111,17 @@ def start_suo5_client():
   global _last_cred, suo5_server_ip
   
   ua = ex_opt.get('user_agent')
-  if ua == FIXED_SUO5_UA or ex_opt.get('disable_check',False):
-    ex_arg = "--ua '%s' " % (ua,)
-  else:
-    ex_arg = "--ua '%s %s' " % (ua,_newest_cred)
-    
-    if not suo5_server_ip and suo5_server_url:
+  if not suo5_server_ip and suo5_server_url:
+    if ua == FIXED_SUO5_UA and not ex_opt.get('disable_check',False):  # tcp relay style
       try:
         b = urlopen(suo5_server_url,timeout=10).read().split(b',')
         if len(b) >= 3 and b[0] == b'OK':
           suo5_server_ip = b[1].decode('utf-8')
       except: pass
+  
+  if ua == FIXED_SUO5_UA or ex_opt.get('disable_check',False):
+    ex_arg = "--ua '%s' " % (ua,)
+  else: ex_arg = "--ua '%s %s' " % (ua,_newest_cred)
   
   if client_user_psw:
     ex_arg += "--auth '%s' " % (client_user_psw,)
