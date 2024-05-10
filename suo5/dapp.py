@@ -110,15 +110,15 @@ FIXED_SUO5_UA = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWeb
 def start_suo5_client():
   global _last_cred, suo5_server_ip
   
-  ua = ex_opt.get('user_agent')
   if not suo5_server_ip and suo5_server_url:
     if not ex_opt.get('with_get_method',False):  # use POST method
       try:
-        b = urlopen(suo5_server_url,timeout=10).read().split(b',')
+        b = urlopen(suo5_server_url,timeout=10).read()[:64].split(b',')
         if len(b) >= 3 and b[0] == b'OK':
           suo5_server_ip = b[1].decode('utf-8')
       except: pass
   
+  ua = ex_opt.get('user_agent')
   if ua == FIXED_SUO5_UA or ex_opt.get('disable_check',False):
     ex_arg = "--ua '%s' " % (ua,)
   else: ex_arg = "--ua '%s %s' " % (ua,_newest_cred)
@@ -213,7 +213,7 @@ class CheckAlive(Thread):
       counter += 1
       
       # check login changing every 40 seconds
-      if counter % 8 == 4 and not ex_opt.get('disable_check',False) and suo5_server_ip:
+      if counter % 8 == 4 and not ex_opt.get('disable_check',False):
         try:
           if os.path.isfile(tr_login_file):
             modi_tm = os.stat(tr_login_file).st_mtime
