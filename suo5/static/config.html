@@ -66,7 +66,7 @@
 </div>
 </form>
 <div class="mt-5 mb-4">
-  <button type="button" class="btn btn-primary shadow-none" id="btn-submit-save" disabled><span class="spinner-border spinner-border-sm d-none" role="status"></span>&nbsp;提交更改</button>
+  <button type="button" class="btn btn-primary shadow-none" id="btn-submit-save" disabled><span class="spinner-border spinner-border-sm d-none" role="status"></span>&nbsp; 提交更改</button>
 </div>
 </div>
 
@@ -95,8 +95,8 @@
   <textarea class="form-control shadow-none" id="with-user-agent" style="height:140px"></textarea>
 </div>
 </form>
-<div class="mt-5 mb-4">
-  <button type="button" class="btn btn-primary shadow-none" id="btn-submit-exopt" disabled><span class="spinner-border spinner-border-sm d-none" role="status"></span>&nbsp;提交更改</button>
+<div class="mt-4 mb-4">
+  <button type="button" class="btn btn-primary shadow-none" id="btn-submit-exopt" disabled><span class="spinner-border spinner-border-sm d-none" role="status"></span>&nbsp; 提交更改</button>
 </div>
 </div>
 
@@ -387,7 +387,7 @@ $( () => {
         }, 2000);  // check every 2 seconds
       }
       else showState('UNKNOWN');
-    }, {method:'POST',body:JSON.stringify({state:newState})} );
+    }, {method:'POST',body:JSON.stringify({state:newState})},60000 );
   });
   
   $('#suo5-server-url, #suo5-user-psw, #auto-start').on('change', ev => {
@@ -423,7 +423,7 @@ $( () => {
         period_check_suo();
       }
       else alert('操作失败');
-    },{method:'POST',body:JSON.stringify(body)} );
+    },{method:'POST',body:JSON.stringify(body)},60000 );
   });
   
   //----
@@ -462,7 +462,7 @@ $( () => {
         period_check_suo();
       }
       else alert('操作失败');
-    },{method:'POST',body:JSON.stringify(body)} );
+    },{method:'POST',body:JSON.stringify(body)},60000 );
   });
   
   //----
