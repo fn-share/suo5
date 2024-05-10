@@ -96,7 +96,7 @@
 </div>
 </form>
 <div class="mt-5 mb-4">
-  <button type="button" class="btn btn-primary shadow-none" id="btn-submit-exopt" disabled>提交更改</button>
+  <button type="button" class="btn btn-primary shadow-none" id="btn-submit-exopt" disabled><span class="spinner-border spinner-border-sm d-none" role="status"></span>&nbsp;提交更改</button>
 </div>
 </div>
 
@@ -409,10 +409,14 @@ $( () => {
     if (user_password.length > 0 && user_password.split(':').length != 2)
       return alert('用户密码格式错误');
     
-    // temporaryDisable(ev.target);
+    let loadingBtn = $('#btn-submit-save .spinner-border');
+    loadingBtn.removeClass('d-none');
+    
     let auto_start = $('#auto-start').prop('checked');
     let body = {server_url,user_password,auto_start};
     url_fetch('../change_config', data => {
+      loadingBtn.addClass('d-none');
+      
       if (data?.result === 'success') {
         $('#btn-submit-save').prop('disabled',true);
         alert('操作成功');
@@ -428,7 +432,7 @@ $( () => {
     $('#btn-submit-exopt').prop('disabled',false);
   });
   
-  $('#with-user-agent').on('keypress', ev => {
+  $('#with-user-agent').on('keydown', ev => {
     $('#btn-submit-exopt').prop('disabled',false);
   });
   
@@ -445,9 +449,13 @@ $( () => {
     let with_cookiejar = $('#with-cookiejar').prop('checked');
     let user_agent = $('#with-user-agent').val().trim();
     
-    // temporaryDisable(ev.target);
+    let loadingBtn = $('#btn-submit-exopt .spinner-border');
+    loadingBtn.removeClass('d-none');
+    
     let body = {disable_check,with_get_method,with_no_gzip,with_cookiejar,user_agent};
     url_fetch('../change_exopt', data => {
+      loadingBtn.addClass('d-none');
+      
       if (data?.result === 'success') {
         $('#btn-submit-exopt').prop('disabled',true);
         alert('操作成功');
