@@ -46,7 +46,7 @@
 <form onsubmit="return false">
 <div class="input-group mb-3" style="width:300px">
   <span class="input-group-text">连接地址</span>
-  <input type="text" class="form-control shadow-none" placeholder="http 或 https 网址" id="suo5-server-url">
+  <textarea class="form-control shadow-none" placeholder="http 或 https 网址" id="suo5-server-url"></textarea>
 </div>
 </form>
 <h3 class="mb-4 mt-5">suo5 客户侧配置</h3>
@@ -92,8 +92,7 @@
 </div>
 <div class="input-group mb-3" style="width:300px">
   <span class="input-group-text">--ua</span>
-  <textarea class="form-control shadow-none" id="with-user-agent"></textarea>
-  <!-- <input type="text" class="form-control shadow-none" id="with-user-agent"> -->
+  <textarea class="form-control shadow-none" id="with-user-agent" style="height:140px"></textarea>
 </div>
 </form>
 <div class="mt-5 mb-4">
@@ -360,10 +359,9 @@ $( () => {
     }
     else return;
     
+    showState(newState == 'CLOSED'? 'TO_CLOSE': 'TO_RUN');
     url_fetch('../state', data => {
       if (data && data.result == 'success') {
-        showState(newState == 'CLOSED'? 'TO_CLOSE': 'TO_RUN');
-        
         let counter = 0;
         let task = setInterval( () => {
           counter += 1;
@@ -382,14 +380,13 @@ $( () => {
               else return;  // continue next loop
               
               clearInterval(task);
-              showState(newState);
               last_suo5_state = data2;
             }
-            // else, ignore
+            showState(newState);
           })
         }, 2000);  // check every 2 seconds
       }
-      // else, ignore
+      else showState('UNKNOWN');
     }, {method:'POST',body:JSON.stringify({state:newState})} );
   });
   
