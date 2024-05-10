@@ -32,6 +32,7 @@ def when_cred_updated(now_tm, keycode, relay_server):
   try:
     _newest_cred = base64.b64encode(now_tm.to_bytes(4,'big') + unhexlify(keycode)).decode('utf-8')
     
+    print('here2',_newest_cred,auto_start_suo5,bool(_last_cred))
     if auto_start_suo5 and is_server_cfg_ok():
       _relay_server = (relay_server[0],8000)
       if not _last_cred:
