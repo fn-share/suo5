@@ -46,7 +46,7 @@
 <form onsubmit="return false">
 <div class="input-group mb-3" style="width:300px">
   <span class="input-group-text">连接地址</span>
-  <textarea class="form-control shadow-none" placeholder="http 或 https 网址" id="suo5-server-url"></textarea>
+  <textarea class="form-control shadow-none" placeholder="http 或 https 网址" style="height:64px" id="suo5-server-url"></textarea>
 </div>
 </form>
 <h3 class="mb-4 mt-5">suo5 客户侧配置</h3>
@@ -66,7 +66,7 @@
 </div>
 </form>
 <div class="mt-5 mb-4">
-  <button type="button" class="btn btn-primary shadow-none" id="btn-submit-save" disabled>提交更改</button>
+  <button type="button" class="btn btn-primary shadow-none" id="btn-submit-save" disabled><span class="spinner-border spinner-border-sm d-none" role="status"></span>&nbsp;提交更改</button>
 </div>
 </div>
 
@@ -394,7 +394,7 @@ $( () => {
     $('#btn-submit-save').prop('disabled',false);
   });
   
-  $('#suo5-server-url, #suo5-user-psw').on('keypress', ev => {
+  $('#suo5-server-url, #suo5-user-psw').on('keydown', ev => {
     $('#btn-submit-save').prop('disabled',false);
   });
   

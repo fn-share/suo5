@@ -111,7 +111,9 @@ FIXED_SUO5_UA = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWeb
 def start_suo5_client():
   global _last_cred, suo5_server_ip, suo5_server_port
   
-  if not suo5_server_ip and suo5_server_url:
+  if not suo5_server_url: return False
+  
+  if not suo5_server_ip:
     if not ex_opt.get('with_get_method',False):  # use POST method
       try:
         b = urlopen(suo5_server_url,timeout=10).read()[:64].split(b',')
