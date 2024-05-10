@@ -232,6 +232,7 @@ class CheckAlive(Thread):
                     break
               
               b2 = line.split(',')
+              print('here',b2)
               if len(b2) == 4:  # should be: "now,keycode,server_ip,server_port"
                 server = (b2[2],int(b2[3]))
                 when_cred_updated(int(b2[0]),b2[1],server)
