@@ -222,11 +222,14 @@ class CheckAlive(Thread):
               
               line = ''
               b = open(tr_login_file,'rt').read().splitlines()
-              s = ',' + suo5_server_ip + ','
-              for ln in b:
-                if ln.find(s) > 0:
-                  line = ln
-                  break
+              if not suo5_server_ip:
+                line = b[-1]     # get last line
+              else:
+                s = ',' + suo5_server_ip + ','
+                for ln in b:
+                  if ln.find(s) > 0:
+                    line = ln
+                    break
               
               b2 = line.split(',')
               if len(b2) == 4:  # should be: "now,keycode,server_ip,server_port"
