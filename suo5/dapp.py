@@ -121,7 +121,7 @@ def start_suo5_client():
   
   print('here3',suo5_server_ip,ex_opt)
   ua = ex_opt.get('user_agent')
-  if ua == FIXED_SUO5_UA or ex_opt.get('disable_check',False):
+  if ua != FIXED_SUO5_UA:
     ex_arg = "--ua '%s' " % (ua,)
   else: ex_arg = "--ua '%s %s' " % (ua,_newest_cred)
   
