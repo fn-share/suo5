@@ -108,19 +108,23 @@ def find_suo5_PID():
 
 FIXED_SUO5_UA = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.1.2.3'
 
+def try_init_serv_ip():
+  if suo5_server_ip or not suo5_server_url: return
+  global suo5_server_ip, suo5_server_port
+  
+  if not ex_opt.get('with_get_method',False):  # use POST method
+    try:
+      b = urlopen(suo5_server_url,timeout=10).read()[:64].split(b',')
+      if len(b) >= 3 and b[0] == b'OK':
+        suo5_server_port = int(b[2])
+        suo5_server_ip = b[1].decode('utf-8')
+    except: pass
+
 def start_suo5_client():
-  global _last_cred, suo5_server_ip, suo5_server_port
+  global _last_cred
   
   if not suo5_server_url: return False
-  
-  if not suo5_server_ip:
-    if not ex_opt.get('with_get_method',False):  # use POST method
-      try:
-        b = urlopen(suo5_server_url,timeout=10).read()[:64].split(b',')
-        if len(b) >= 3 and b[0] == b'OK':
-          suo5_server_port = int(b[2])
-          suo5_server_ip = b[1].decode('utf-8')
-      except: pass
+  if not suo5_server_ip: try_init_serv_ip()
   
   ua = ex_opt.get('user_agent')
   if ua != FIXED_SUO5_UA:
@@ -222,6 +226,8 @@ class CheckAlive(Thread):
           if os.path.isfile(tr_login_file):
             modi_tm = os.stat(tr_login_file).st_mtime
             if tr_login_time != modi_tm:
+              if not suo5_server_ip: try_init_serv_ip()
+              
               tr_login_time = modi_tm
               
               line = ''
@@ -322,7 +328,7 @@ def suo5_get_state():
 
 @app.route('/change_config', methods=['POST'])
 def suo5_change_cfg():
-  global auto_start_suo5, suo5_server_url, client_user_psw
+  global suo5_server_ip, auto_start_suo5, suo5_server_url, client_user_psw
   
   try:
     if not _check_token_ok(request): return ('INVALID_TOKEN',401)
@@ -337,6 +343,9 @@ def suo5_change_cfg():
     
     # step 2: change global variables
     cfg = runtime['config']
+    if cfg.get('suo5_server_url') != server_url:
+      suo5_server_ip = ''
+    
     auto_start_suo5 = cfg['auto_start_suo5'] = auto_start
     suo5_server_url = cfg['suo5_server_url'] = server_url
     client_user_psw = cfg['client_user_psw'] = user_passw
