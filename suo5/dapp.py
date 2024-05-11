@@ -109,8 +109,8 @@ def find_suo5_PID():
 FIXED_SUO5_UA = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.1.2.3'
 
 def try_init_serv_ip():
-  if suo5_server_ip or not suo5_server_url: return
   global suo5_server_ip, suo5_server_port
+  if suo5_server_ip or not suo5_server_url: return
   
   if not ex_opt.get('with_get_method',False):  # use POST method
     try:
