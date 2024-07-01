@@ -34,7 +34,7 @@
   <div class="row justify-content-center mt-3 pt-2 pb-2 d-none" id="no-account">
     <div class="col-8 col-md-6 alert alert-warning pt-3 pb-3">
       <h4 class="pt-4 pb-3">已找到身份卡，但尚未启用</h4>
-      <p>身份智能卡尚未初始化，<a target="_blank" href="../../tee/">请跳转到账户管理界面</a> 对设备实施初始化。</p>
+      <p>身份智能卡尚未初始化，请跳转到 <a target="_blank" href="../../tee/">智能卡管理</a> 对设备实施初始化。</p>
     </div>
   </div>
 
@@ -207,10 +207,10 @@ var tee_state  = 'ERR_REQUEST_FAIL';
 var has_login  = false;
 var ever_login = false;
 
+var last_base36_name = '';
 var last_plt_pubkey  = '';
 var last_dev_pubkey  = '';
 var last_alt_pubkey  = '';
-var last_base36_name = '';
 
 var tokEnd = getCookie__('_tok_end_');
 if (!tokEnd || Math.floor((new Date()).valueOf()/1000) >= (parseInt(tokEnd)-300))  // 300 is 5 minutes
@@ -262,50 +262,32 @@ function getState(retry_num, renew, callback) {
 
 function updateTeeState(renew) {
   getState(2,renew, data => {   // retry 2 times more, total 3 times
-    // tee_state = 'ERR_NO_ACCOUNT';
-    if (tee_state == 'ERR_NO_CARD') {
-      last_base36_name = data.base36;
-      if (PAGE_INFO.tee_required)
-        $('#hint-area,#no-device').removeClass('d-none');
-      else {
-        last_plt_pubkey = '';
-        last_dev_pubkey = '';
-        last_alt_pubkey = '';
-        
-        if (tokEnd && data.has_login) {
-          all_nav_items.removeClass('disabled');
-          ever_login = true;
-          has_login = true;  // success auto login
-          whenSuccLogin();
-        }
-        else {
-          $('#login-psw2').toggleClass('d-none',!data.first_visit);
-          $('#desc-first-login').toggleClass('d-none',!data.first_visit);
-          $('#login-area').removeClass('d-none');
-          $('#login-psw').focus();
-        }
-      }
+    last_base36_name = data.base36 || '';
+    last_plt_pubkey = data.plt_pubkey || '';
+    last_dev_pubkey = data.dev_pubkey || '';
+    last_alt_pubkey = data.alt_pubkey || '';
+    
+    if (tee_state == 'ERR_NO_CARD' && PAGE_INFO.tee_required) {
+      $('#hint-area,#no-device').removeClass('d-none');
+      return;
     }
-    else if (tee_state == 'ERR_NO_ACCOUNT' || tee_state == 'ERR_WAIT_IMPORT') {
+    if (tee_state == 'ERR_NO_ACCOUNT' || tee_state == 'ERR_WAIT_IMPORT') {
       $('#hint-area, #no-account').removeClass('d-none');
+      return;
     }
-    else if (tee_state == 'NO_PASSWD') {
-      last_plt_pubkey = data.plt_pubkey;
-      last_dev_pubkey = data.dev_pubkey;
-      last_alt_pubkey = data.alt_pubkey;
-      last_base36_name = data.base36;
-      $('#hint-area, #wait-reset-psw').removeClass('d-none');
-    }
-    else if (tee_state != 'NORMAL') {  // ERR_UNKNOWN, ERR_REQUEST_FAIL
+    if (tee_state != 'ERR_NO_CARD' && tee_state != 'NORMAL') { // such as: ERR_UNKNOWN, ERR_REQUEST_FAIL, NO_PASSWD
       $('#hint-area, #req-abnormal').removeClass('d-none');
+      return;
     }
-    else {  // is 'NORMAL', next will try login
-      last_plt_pubkey = data.plt_pubkey;
-      last_dev_pubkey = data.dev_pubkey;
-      last_alt_pubkey = data.alt_pubkey;
-      last_base36_name = data.base36;
-      
-      if (tokEnd && data.has_login) {  // already login, data.has_login should be false if server restarted
+    
+    if (data.first_visit) {
+      $('#login-psw2').removeClass('d-none');
+      $('#desc-first-login').removeClass('d-none');
+      $('#login-area').removeClass('d-none');
+      $('#login-psw').focus();
+    }
+    else {
+      if (tokEnd && data.has_login) {
         all_nav_items.removeClass('disabled');
         ever_login = true;
         has_login = true;  // success auto login
@@ -321,10 +303,6 @@ function updateTeeState(renew) {
   });
 }
 
-function _checkPswFormat(psw) {
-  return psw.match(/^\d{8}$/)
-}
-
 function temporaryDisable(node) {
   let curr = $(node);
   curr.prop('disabled',true);
@@ -334,8 +312,11 @@ function temporaryDisable(node) {
 function _loginAccount(targ) {
   let psw = $('#login-psw').val().trim();
   if (!psw) return alert('密码不能为空');
-  if (!_checkPswFormat(psw))
-    return alert('密码格式不正确');
+  if (Buffer.from(psw).length <= 3) return alert('密码太短');
+  if (!$('#login-psw2').hasClass('d-none')) {
+    let psw2 = $('#login-psw2').val().trim();
+    if (psw != psw2) return alert('两次输入密码不一致');
+  }
   
   if (targ) temporaryDisable(targ);
   

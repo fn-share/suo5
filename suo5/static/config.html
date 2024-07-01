@@ -472,7 +472,7 @@ $( () => {
       showState(data.active? 'RUNNING': 'CLOSED');
       last_suo5_state = data;
       
-      setInterval(period_check_suo,60000);  // period check every 60 seconds
+      setInterval(period_check_suo,30000);  // period check every 30 seconds
     }
     else console.log('error: suo5 state is unknown');
   });
