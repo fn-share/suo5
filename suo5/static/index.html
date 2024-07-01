@@ -339,7 +339,7 @@ function _loginAccount(targ) {
   
   if (targ) temporaryDisable(targ);
   
-  url_fetch('../../staic/api/query_login', data => {
+  url_fetch('../../static/api/query_login', data => {
     if (data === null || data.result != 'success') return alert('请求失败');
     
     psw = CreateHash('sha256').update(Buffer.from(psw)).digest().toString('hex');
