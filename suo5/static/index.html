@@ -232,7 +232,7 @@ if (!tokEnd || Math.floor((new Date()).valueOf()/1000) >= (parseInt(tokEnd)-300)
   tokEnd = ''; // access token is un-available
 
 function getState(retry_num, renew, callback) {
-  let url = '../../tee/state';
+  let url = '../../static/api/state';
   if (renew) url += '?renew=1';
   
   wait__(fetch(url),10000).then( res => {
@@ -354,11 +354,11 @@ function _loginAccount(targ) {
   
   if (targ) temporaryDisable(targ);
   
-  url_fetch('../../tee/query_login', data => {
+  url_fetch('../../staic/api/query_login', data => {
     if (data === null || data.result != 'success') return alert('请求失败');
     
     let cipher = genCipherForLogin(data.nonce,psw);
-    url_fetch('../../tee/login', data2 => {
+    url_fetch('../../static/api/login', data2 => {
       if (data2 === null) return alert('请求失败');
       
       if (data2.result == 'success') {  // pass _tee_tok_=xxx, by server accessing cookie
@@ -391,7 +391,7 @@ function _loginAccount2(targ) {   // testing user login
   if (targ) temporaryDisable(targ);
   
   psw = CreateHash('sha256').update(Buffer.from('PSW:'+psw)).digest().toString('hex');
-  url_fetch('../../tee/login', data2 => {
+  url_fetch('../../static/api/login', data2 => {
     if (data2 === null) return alert('请求失败');
     
     if (data2.result == 'success') {  // pass _tee_tok_=xxx, by server accessing cookie
@@ -412,7 +412,7 @@ function _loginAccount2(targ) {   // testing user login
 }
 
 function logoutAccount() {
-  url_fetch('../../tee/logout', data => {
+  url_fetch('../../static/api/logout', data => {
     if (data === null || data.result != 'success')
       return alert('请求失败');
     
