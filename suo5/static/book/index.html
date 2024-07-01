@@ -55,6 +55,7 @@
 
 <div class="container-fluid p-2"><div class="row">
   <div class="col-sm-4 col-md-3 pb-4 pe-0" id="md-nav-root" style="height:calc(100vh - 1rem); overflow-y:auto;">
+    <div class="text-center" id="show-loading"><img src="//www.nb-chain.cn/www/common/img/loading.gif" style="width:128px; height:128px;"></div>
     <div class="list-group small" id="filelist-tab" role="tablist"></div>
   </div>
   <div class="col-sm-8 col-md-9 pe-3" id="viewer-root" style="height:calc(100vh - 1rem); overflow-y:auto;">
@@ -297,6 +298,7 @@ window.addEventListener('load', function() {
     });
     
     document.body.fns_config = data;
+    $('#show-loading').addClass('d-none');
     generateNavlist(data);
     
     setTimeout( () => {
@@ -312,7 +314,7 @@ window.addEventListener('load', function() {
 });
 </script>
 
-<script src="https://www.fn-share.com/www/tools/easy_book/nav_bar.0.1.js" defer></script>
+<script defer src="//www.nb-chain.cn/www/tools/easy_book/nav_bar.0.1.js"></script>
 
 </body>
 </html>
