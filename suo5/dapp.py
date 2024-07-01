@@ -396,8 +396,11 @@ def suo5_change_exopt():
       logger.info('try stop suo5 client.')
       os.popen('kill -9 ' + pid_str).read()
     
+    print('here1',pid_str)
     if cfg.get('auto_start_suo5',False) and not find_suo5_PID():
+      print('here2')
       start_suo5_client()
+      print('here3')
     
     return {'result':'success'}
   except:
