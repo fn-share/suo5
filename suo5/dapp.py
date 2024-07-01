@@ -53,7 +53,7 @@ _check_token_ok = runtime['check_token_ok']
 auto_start_suo5 = bool(runtime['config'].get('auto_start_suo5',False))
 
 suo5_local_host = ''  # 0.0.0.0:49000
-find_client_pid = ''  # ps -ef | grep 'suo5 -t http' | grep -v grep | awk '{print $2}'
+find_client_pid = ''  # ps -ef | grep 'suo5/suo5-' | grep -v grep | awk '{print $2}'
 client_user_psw = ''  # 'user:password' or ''
 
 ex_opt = {}  # {disable_check,with_get_method,with_no_gzip,with_cookiejar,user_agent}
@@ -396,11 +396,8 @@ def suo5_change_exopt():
       logger.info('try stop suo5 client.')
       os.popen('kill -9 ' + pid_str).read()
     
-    print('here1',pid_str)
     if cfg.get('auto_start_suo5',False) and not find_suo5_PID():
-      print('here2')
-      start_suo5_client()
-      print('here3')
+      Timer(1,start_suo5_client).start()
     
     return {'result':'success'}
   except:
