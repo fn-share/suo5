@@ -360,7 +360,7 @@ def suo5_change_cfg():
       os.popen('kill -9 ' + pid_str).read()
     
     if auto_start and not find_suo5_PID():
-      start_suo5_client()
+      Timer(1,start_suo5_client).start()
     
     return {'result':'success'}
   except:
